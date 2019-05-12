@@ -53,23 +53,12 @@ function update()
     else
     {
         //var hashapass = b64_hmac_sha1(masterKey.value, siteTag.value).substr(0,8);
-        var hashWordSize       = 8;
+        var hashWordSize       = document.getElementById("hashWordSize").value;
         var requireDigit       = document.getElementById("digit").checked;
         var requirePunctuation = document.getElementById("punctuation").checked;
         var requireMixedCase   = document.getElementById("mixedCase").checked;
         var restrictSpecial    = document.getElementById("noSpecial").checked;
         var restrictDigits     = document.getElementById("digitsOnly").checked;
-        if      (document.getElementById("s6" ).checked) hashWordSize = 6;
-        else if (document.getElementById("s8" ).checked) hashWordSize = 8;
-        else if (document.getElementById("s10").checked) hashWordSize = 10;
-        else if (document.getElementById("s12").checked) hashWordSize = 12;
-        else if (document.getElementById("s14").checked) hashWordSize = 14;
-        else if (document.getElementById("s16").checked) hashWordSize = 16;
-        else if (document.getElementById("s18").checked) hashWordSize = 18;
-        else if (document.getElementById("s20").checked) hashWordSize = 20;
-        else if (document.getElementById("s22").checked) hashWordSize = 22;
-        else if (document.getElementById("s24").checked) hashWordSize = 24;
-        else if (document.getElementById("s26").checked) hashWordSize = 26;
         hashWord.value = PassHashCommon.generateHashWord(
                 siteTag.value,
                 masterKey.value,
@@ -192,18 +181,8 @@ function onSelectSiteTag(fld)
     var sizeMatch = options.match(/[0-9]+/);
     var hashWordSize = (sizeMatch != null && sizeMatch.length > 0
                                 ? parseInt(sizeMatch[0])
-                                : 8);
-    document.getElementById("s6" ).checked = (hashWordSize == 6 );
-    document.getElementById("s8" ).checked = (hashWordSize == 8 );
-    document.getElementById("s10").checked = (hashWordSize == 10);
-    document.getElementById("s12").checked = (hashWordSize == 12);
-    document.getElementById("s14").checked = (hashWordSize == 14);
-    document.getElementById("s16").checked = (hashWordSize == 16);
-    document.getElementById("s18").checked = (hashWordSize == 18);
-    document.getElementById("s20").checked = (hashWordSize == 20);
-    document.getElementById("s22").checked = (hashWordSize == 22);
-    document.getElementById("s24").checked = (hashWordSize == 24);
-    document.getElementById("s26").checked = (hashWordSize == 26);
+                                : 26);
+		document.getElementById("hashWordSize").value = hashWordSize;
     if (validate())
         update();
 }

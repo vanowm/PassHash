@@ -165,87 +165,12 @@
                     <caption label="&pshOpt.hashWordSizeDefault.label;"/>
 
                     <hbox>
-
-                        <radiogroup id="pshOpt_hashWordSizeDefault">
-
-                            <vbox class="sizebox">
-
-                                <hbox>
-
-                                    <radio id="pshOpt_hashWordSizeDefault4"
-                                        label="4"
-                                        accesskey="4"
-                                        value="4"
-                                        selected="false"/>
-
-                                    <radio id="pshOpt_hashWordSizeDefault6"
-                                        label="6"
-                                        accesskey="6"
-                                        value="6"
-                                        selected="false"/>
-
-                                    <radio id="pshOpt_hashWordSizeDefault8"
-                                        label="8"
-                                        accesskey="8"
-                                        value="8"
-                                        selected="true"/>
-
-                                    <radio id="pshOpt_hashWordSizeDefault10"
-                                        label="10"
-                                        accesskey="0"
-                                        value="10"
-                                        selected="false"/>
-
-                                    <radio id="pshOpt_hashWordSizeDefault12"
-                                        label="12"
-                                        accesskey="2"
-                                        value="12"
-                                        selected="false"/>
-
-                                    <radio id="pshOpt_hashWordSizeDefault14"
-                                        label="14"
-                                        value="14"
-                                        selected="false"/>
-
-                                </hbox>
-
-                                <hbox class="hashWordSizeBox">
-
-                                    <radio id="pshOpt_hashWordSizeDefault16"
-                                        label="16"
-                                        value="16"
-                                        selected="false"/>
-
-                                    <radio id="pshOpt_hashWordSizeDefault18"
-                                        label="18"
-                                        value="18"
-                                        selected="false"/>
-
-                                    <radio id="pshOpt_hashWordSizeDefault20"
-                                        label="20"
-                                        value="20"
-                                        selected="false"/>
-
-                                    <radio id="pshOpt_hashWordSizeDefault22"
-                                        label="22"
-                                        value="22"
-                                        selected="false"/>
-
-                                    <radio id="pshOpt_hashWordSizeDefault24"
-                                        label="24"
-                                        value="24"
-                                        selected="false"/>
-
-                                    <radio id="pshOpt_hashWordSizeDefault26"
-                                        label="26"
-                                        value="26"
-                                        selected="false"/>
-
-                                </hbox>
-
-                            </vbox>
-
-                        </radiogroup>
+											<textbox
+												id="pshOpt_hashWordSizeDefault"
+												type="number"
+												min="1"
+												max="100"
+											/>
 
                     </hbox>
 

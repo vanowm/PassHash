@@ -79,3 +79,5 @@
 <!ENTITY pshOpt.cancel.accesskey              "C">
 <!ENTITY pshOpt.disclosure.accesskey          "I">
 <!ENTITY pshOpt.showportable.accesskey        "r">
+<!ENTITY pshDlg.copy.label                 		"Clipboard">
+<!ENTITY pshDlg.copy.accesskey             		"c">

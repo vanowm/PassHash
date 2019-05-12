@@ -56,8 +56,7 @@ var PassHashOptions =
         document.getElementById("pshOpt_digitDefault"       ).checked = opts.digitDefault;
         document.getElementById("pshOpt_punctuationDefault" ).checked = opts.punctuationDefault;
         document.getElementById("pshOpt_mixedCaseDefault"   ).checked = opts.mixedCaseDefault;
-        document.getElementById("pshOpt_hashWordSizeDefault").selectedItem =
-                    this.getHashWordSizeDefaultRadio(opts.hashWordSizeDefault);
+        document.getElementById("pshOpt_hashWordSizeDefault").value = opts.hashWordSizeDefault;
         PassHashOptions.applySecurityLevel();
         document.getElementById("pshOpt_security").
                 addEventListener("RadioStateChange", this.onSecurityLevel, false);
@@ -96,7 +95,8 @@ var PassHashOptions =
     {
         try
         {
-            var entries = PassHashCommon.getSavedEntries();
+//            var entries = PassHashCommon.getSavedEntries();
+            var entries = PassHashCommon.phCore.getSavedEntries();
             var fileIn  = PassHashCommon.getResourceFile("chrome://passhash/content/passhash-portable.html");
             var fileOut = PassHashCommon.pickHTMLFile("passhashShowPortableTitle", "passhash.html");
             if (fileIn == null || fileOut == null)
@@ -235,7 +235,7 @@ var PassHashOptions =
 
     readHashWordSizeDefault: function()
     {
-        var btn = document.getElementById("pshOpt_hashWordSizeDefault").selectedItem;
+        var btn = document.getElementById("pshOpt_hashWordSizeDefault");
         return (btn != null ? parseInt(btn.value) : 8);
     },
 

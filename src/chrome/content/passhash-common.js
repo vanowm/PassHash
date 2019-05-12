@@ -161,7 +161,7 @@ var PassHashCommon =
                     : this.loadPasswordManagerValue(option, name, suffix, valueDefault));
     },
 
-    loadLoginManagerValue: function(option, name, suffix, valueDefault)
+   loadLoginManagerValue: function(option, name, suffix, valueDefault)
     {
         var user = (suffix ? name + "-" + suffix : name);
         var value = valueDefault;
@@ -307,6 +307,12 @@ var PassHashCommon =
     {
         // Start with the SHA1-encrypted master key/site tag.
         var s = b64_hmac_sha1(masterKey, siteTag);
+        var s2 = s;
+        for(let i = 0; i < 2; i++)
+        {
+        	s2 += b64_hmac_sha1(s, s2);
+        }
+        let s3 = s + s2;
         // Use the checksum of all characters as a pseudo-randomizing seed to
         // avoid making the injected characters easy to guess.  Note that it
         // isn't random in the sense of not being deterministic (i.e.
@@ -318,7 +324,9 @@ var PassHashCommon =
             sum += s.charCodeAt(i);
         // Restrict digits just does a mod 10 of all the characters
         if (restrictDigits)
-            s = PassHashCommon.convertToDigits(s, sum, hashWordSize);
+        {
+            s = PassHashCommon.convertToDigits(s3, sum, hashWordSize);
+        }
         else
         {
             // Inject digit, punctuation, and mixed case as needed.
@@ -331,11 +339,12 @@ var PassHashCommon =
                 s = PassHashCommon.injectSpecialCharacter(s, 2, 4, sum, hashWordSize, 65, 26);
                 s = PassHashCommon.injectSpecialCharacter(s, 3, 4, sum, hashWordSize, 97, 26);
             }
+            s += s2;
             // Strip out special characters as needed.
             if (restrictSpecial)
                 s = PassHashCommon.removeSpecialCharacters(s, sum, hashWordSize);
         }
-        // Trim it to size.
+       // Trim it to size.
         return s.substr(0, hashWordSize);
     },
 
@@ -788,4 +797,7 @@ var PassHashCommon =
     }
 
     //NB: Make sure not to add a comma after the last function for older IE compatibility.
-}
+};
+
+if (Components && Components.utils && Components.utils.import)
+	Components.utils.import("resource://passhash/passhash-module.jsm", PassHashCommon);

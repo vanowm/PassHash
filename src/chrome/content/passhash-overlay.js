@@ -32,7 +32,7 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
- 
+
 // Some marker management code was dapted from informenter extension code
 //  informenter URL: http://informenter.mozdev.org/
 
@@ -47,9 +47,12 @@ var PassHash =
         document.getElementById("contentAreaContextMenu").
                 addEventListener("popupshowing", this.onContextMenuUpdate, false);
         this.markerNumber = 1;
-        window.onclick = this.checkMarkerClick;
-        if (this.options.showMarker || this.options.unmaskMarker)
+        window.addEventListener("click", this.checkMarkerClick, true);
+        window.addEventListener("dblclick", this.dblclick, true);
+			  try{gBrowser.addEventListener("DOMContentLoaded", this.checkMarkerOnloadEvent, true);}catch(e){};
+       if (this.options.showMarker || this.options.unmaskMarker)
             this.addMarkers(window.content, this.options.showMarker, this.options.unmaskMarker);
+
         // Override the default shortcut key?
         if (this.options.shortcutKeyCode && this.options.shortcutKeyMods)
         {
@@ -79,7 +82,7 @@ var PassHash =
     onInvokeDialog: function()
     {
         var textNode = this.getTextNode();
-        if (textNode != null)
+//        if (textNode != null)
             this.invokeDialog(textNode);
     },
 
@@ -89,8 +92,10 @@ var PassHash =
                         .setAttribute("hidden", !gContextMenu.onTextInput);
     },
 
-    addMarkers: function(windowCurrent, dialogButton, unmaskButton) 
+    addMarkers: function(windowCurrent, dialogButton, unmaskButton)
     {
+      if (!windowCurrent)
+        return;
         var inputs = windowCurrent.document.getElementsByTagName("input");
 
         for (var i = 0; i < inputs.length; i++)
@@ -231,10 +236,14 @@ var PassHash =
         var marker = PassHash.getTargetMarker(textNode, "marker");
         if (marker != null)
             PassHash.setMarkerStyle(marker, true);
-        textNode.disabled = true;
+        if (textNode != null)
+	        textNode.disabled = true;
         var params = {input: content.document.location, output: null};
         window.openDialog("chrome://passhash/content/passhash-dialog.xul", "dlg",
                           "modal,centerscreen", params);
+        if (textNode == null)
+					return;
+
         textNode.disabled = false;
         if (marker != null)
             PassHash.setMarkerStyle(marker, false);
@@ -244,9 +253,12 @@ var PassHash =
             textNode.value = hashapass;
             textNode.focus();
             textNode.select();
+textNode.dispatchEvent(new content.UIEvent('change', {view: content, bubbles: true, cancelable: true}));
+textNode.dispatchEvent(new content.UIEvent('input', {view: content, bubbles: true, cancelable: true}));
         }
         else
             textNode.focus();
+
     },
 
     toggleMask: function(textNode)
@@ -266,7 +278,33 @@ var PassHash =
             textNode.setAttribute("type", "password");
             textNode.setAttribute("phUnmasked", "false");
         }
-    }
+    },
+
+		checkMarkerOnloadEvent: function(event)
+		{
+			PassHash.checkMarkerOnload(event);
+		},
+
+		checkMarkerOnload: function(event)
+		{
+			if (event.originalTarget instanceof HTMLDocument)
+			{
+				var win = event.originalTarget.defaultView;
+				if (this.options.showMarker || this.options.unmaskMarker)
+						this.addMarkers(win.content, this.options.showMarker, this.options.unmaskMarker);
+			}
+		},
+
+		dblclick: function(event)
+		{
+			let node = event.target;
+			if (node != null && PassHashCommon.isTextNode(node) && !node.disabled && !node.readOnly && node.type == "password")
+			{
+				PassHash.invokeDialog(node);
+				return false;   // handled
+			}
+		}
+
 };
 
 window.addEventListener("load",  function(e) { PassHash.onLoad(e); }, true);

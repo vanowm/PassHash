@@ -132,8 +132,19 @@
                             class="formfield"
                             type="password"
                             readonly="true"
+														multiline="true"
+														rows="3"
+														onclick="this.select()"
                             />
-
+												<vbox>
+                        <button
+                            id="copy"
+                            label="&pshDlg.copy.label;"
+                            class="fieldbutton"
+                            oncommand="PassHash.onCopy();"
+                            accesskey="&pshDlg.copy.accesskey;"
+                            tabindex="102"
+                            />
                         <button
                             id="options"
                             label="&pshDlg.options.label;"
@@ -142,6 +153,7 @@
                             accesskey="&pshDlg.options.accesskey;"
                             tabindex="102"
                             />
+                        </vbox>
 
                     </row>
 
@@ -231,7 +243,6 @@
                 </groupbox>
 
             </vbox>
-
             <groupbox
                 id="hashWordSizeGroup"
                 >
@@ -240,124 +251,15 @@
                     label="&pshDlg.hashWordSize.label;"
                     />
 
-                <radiogroup
-                    id="hashWordSize"
-                    >
-
-                    <hbox>
-
-                        <vbox>
-
-                            <radio
-                                id="hashWordSize4"
-                                label="4"
-                                accesskey="4"
-                                value="4"
-                                oncommand="PassHash.onHashWordSizeChanged();"
-                                selected="false"
-                                />
-
-                            <radio
-                                id="hashWordSize6"
-                                label="6"
-                                accesskey="6"
-                                value="6"
-                                oncommand="PassHash.onHashWordSizeChanged();"
-                                selected="false"
-                                />
-
-                            <radio
-                                id="hashWordSize8"
-                                label="8"
-                                accesskey="8"
-                                value="8"
-                                oncommand="PassHash.onHashWordSizeChanged();"
-                                selected="true"
-                                />
-
-                            <radio
-                                id="hashWordSize10"
-                                label="10"
-                                accesskey="0"
-                                value="10"
-                                oncommand="PassHash.onHashWordSizeChanged();"
-                                selected="false"
-                                />
-
-                            <radio
-                                id="hashWordSize12"
-                                label="12"
-                                accesskey="2"
-                                value="12"
-                                oncommand="PassHash.onHashWordSizeChanged();"
-                                selected="false"
-                                />
-
-                            <radio
-                                id="hashWordSize14"
-                                label="14"
-                                value="14"
-                                oncommand="PassHash.onHashWordSizeChanged();"
-                                selected="false"
-                                />
-
-                        </vbox>
-
-                        <vbox>
-
-                            <radio
-                                id="hashWordSize16"
-                                label="16"
-                                value="16"
-                                oncommand="PassHash.onHashWordSizeChanged();"
-                                selected="false"
-                                />
-
-                            <radio
-                                id="hashWordSize18"
-                                label="18"
-                                value="18"
-                                oncommand="PassHash.onHashWordSizeChanged();"
-                                selected="false"
-                                />
-
-                            <radio
-                                id="hashWordSize20"
-                                label="20"
-                                value="20"
-                                oncommand="PassHash.onHashWordSizeChanged();"
-                                selected="false"
-                                />
-
-                            <radio
-                                id="hashWordSize22"
-                                label="22"
-                                value="22"
-                                oncommand="PassHash.onHashWordSizeChanged();"
-                                selected="false"
-                                />
-
-                            <radio
-                                id="hashWordSize24"
-                                label="24"
-                                value="24"
-                                oncommand="PassHash.onHashWordSizeChanged();"
-                                selected="false"
-                                />
-
-                            <radio
-                                id="hashWordSize26"
-                                label="26"
-                                value="26"
-                                oncommand="PassHash.onHashWordSizeChanged();"
-                                selected="false"
-                                />
-
-                        </vbox>
-
-                    </hbox>
-
-                </radiogroup>
+									<textbox
+										id="hashWordSize"
+										type="number"
+										min="1"
+										max="100"
+										oninput="PassHash.onHashWordSizeChanged(event);"
+										onchange="PassHash.onHashWordSizeChanged(event);"
+										oncommand="PassHash.onHashWordSizeChanged(event);"
+									/>
 
             </groupbox>
 

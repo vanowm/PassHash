@@ -4,20 +4,53 @@
 
 .formfield {
     font-weight: bold;
-    min-width: 240px;
-    max-width: 240px;
+    min-width: 21em;
+    max-width: 21em;
+ 		word-break: keep-all;
 }
 
 .formcheck {
 }
 
 .fieldbutton {
-    min-width: 90px;
-    max-width: 90px;
+    min-width: 7em;
+    max-width: 7em;
     vertical-align: middle;
     max-height: 2em;
 }
 
 .formrow {
     margin: 2px;
+}
+
+textbox.error
+{
+	box-shadow: 0 0 0.5em red;
+}
+
+@keyframes flash {
+  0%   {box-shadow: 0 0 1em transparent;}
+  50%   {box-shadow: 0 0 1em green;}
+  100%   {box-shadow: 0 0 1em transparent;}
+}
+
+#hash-word
+{
+	font-family: fixed, monospace;
+	font-weight: normal;
+	min-height: 4em;
+}
+#hash-word.flash
+{
+	animation-name: flash;
+  animation-duration: 1s;
+  animation-iteration-count: infinite;
+}
+#hashWordSize
+{
+	width: 4em;
+}
+.info[disabled]
+{
+	cursor: help;
 }

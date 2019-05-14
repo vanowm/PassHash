@@ -41,9 +41,9 @@
                 style="font-weight: bold;"/>
 
             <text
-                value="http://wijjo.com/passhash/"
+                value="https://github.com/vanowm/PassHash"
                 class="url"
-                onclick="window.open('http://wijjo.com/passhash/'); window.close();"/>
+                onclick="window.open('https://github.com/vanowm/PassHash'); window.close();"/>
 
             <separator
                 class="thin"/>

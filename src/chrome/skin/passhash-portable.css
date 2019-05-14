@@ -19,12 +19,13 @@ li {
 .formfield {
     font-size: 10pt;
     font-family: serif;
-    width: 160px;
+    width: 100%;
 }
 
 .formtable {
     border: thin green solid;
     padding: .3em;
+    width: 19em;
 }
 
 .title {
@@ -87,9 +88,24 @@ li {
 
 .button {
     width: 70px;
+    
 }
 
+#bump
+{
+	width: 4em;
+}
 .password {
     font-size: 10pt;
-    width: 160px;
+    width: 100%;
+}
+
+
+textarea
+{
+	height: 4.5em;
+	word-break: keep-all;
+	font-family: fixed, monospace !important;
+	font-weight: normal;
+	border: 1px solid;
 }

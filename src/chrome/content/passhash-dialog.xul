@@ -6,17 +6,21 @@
 
 <dialog
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" 
-    buttons="accept,cancel,disclosure"
+    buttons="accept,cancel,disclosure, help"
     title="&pshDlg.title.label;"
     onload="PassHash.onLoad();"
     ondialogaccept="return PassHash.onAccept();"
+    ondialogcancel="return PassHash.onCancel();"
     ondialogdisclosure="PassHash.onDisclosure();"
+    ondialoghelp = "PassHash.onSettings();"
     buttonlabelaccept="&pshDlg.accept.label;"
     buttonlabelcancel="&pshDlg.cancel.label;"
     buttonlabeldisclosure="&pshDlg.disclosure.label;"
+    buttonlabelhelp="&pshDlg.settings.label;"
     buttonaccesskeyaccept="&pshDlg.accept.accesskey;"
     buttonaccesskeycancel="&pshDlg.cancel.accesskey;"
     buttonaccesskeydisclosure="&pshDlg.disclosure.accesskey;"
+    buttonaccesskeyhelp="&pshDlg.settings.accesskey;"
     >
 
     <stringbundle
@@ -26,6 +30,10 @@
 
     <script
         src="passhash-sha1.js"
+        />
+
+    <script
+        src="passhash-sha3.js"
         />
 
     <script
@@ -133,8 +141,8 @@
                             type="password"
                             readonly="true"
 														multiline="true"
-														rows="3"
 														onclick="this.select()"
+														onfocus="this.select()"
                             />
 												<vbox>
                         <button
@@ -151,7 +159,7 @@
                             class="fieldbutton"
                             oncommand="PassHash.onOptions();"
                             accesskey="&pshDlg.options.accesskey;"
-                            tabindex="102"
+                            tabindex="104"
                             />
                         </vbox>
 
@@ -167,7 +175,7 @@
             id="options-box"
             >
 
-            <vbox>
+            <vbox flex="1">
 
                 <groupbox
                     id="requirementsGroup"
@@ -206,63 +214,77 @@
                             checked="false"
                             />
 
-                    </vbox>
-
-                </groupbox>
-
-                <groupbox
-                    id="restrictionsGroup"
-                    >
-
-                    <caption
-                        label="&pshDlg.restrictions.label;"
-                        />
-
-                    <vbox>
-
                         <checkbox
-                            id="noSpecial"
-                            label="&pshDlg.noSpecial.label;"
-                            accesskey="&pshDlg.noSpecial.accesskey;"
+                            id="sha3"
+                            label="&pshDlg.sha3.label;"
+                            accesskey="&pshDlg.sha3.accesskey;"
                             flex="1"
-                            oncommand="PassHash.onRestrictSpecialChanged();"
+                            oncommand="PassHash.onSha3Changed();"
                             checked="false"
-                            />
-
-                        <checkbox
-                            id="digitsOnly"
-                            label="&pshDlg.digitsOnly.label;"
-                            accesskey="&pshDlg.digitsOnly.accesskey;"
-                            flex="1"
-                            oncommand="PassHash.onRestrictDigitsChanged();"
-                            checked="false"
+                            class="info"
+														tooltiptext="&pshDlg.sha3.tooltip;"
                             />
 
                     </vbox>
 
                 </groupbox>
+
 
             </vbox>
+            <vbox flex="1">
+		            <groupbox
+		                id="hashWordSizeGroup"
+		                >
+
+		                <caption
+		                    label="&pshDlg.hashWordSize.label;"
+												accesskey="&pshOpt.hashWordSizeDefault.accesskey;"
+		                    />
+
+											<textbox
+												id="hashWordSize"
+												type="number"
+												min="1"
+												max="100"
+												oninput="PassHash.onHashWordSizeChanged(event);"
+												onchange="PassHash.onHashWordSizeChanged(event);"
+												oncommand="PassHash.onHashWordSizeChanged(event);"
+												accesskey="&pshOpt.hashWordSizeDefault.accesskey;"
+											/>
+
+		            </groupbox>
             <groupbox
-                id="hashWordSizeGroup"
+                id="restrictionsGroup"
                 >
 
                 <caption
-                    label="&pshDlg.hashWordSize.label;"
+                    label="&pshDlg.restrictions.label;"
                     />
 
-									<textbox
-										id="hashWordSize"
-										type="number"
-										min="1"
-										max="100"
-										oninput="PassHash.onHashWordSizeChanged(event);"
-										onchange="PassHash.onHashWordSizeChanged(event);"
-										oncommand="PassHash.onHashWordSizeChanged(event);"
-									/>
+                <vbox>
+
+                    <checkbox
+                        id="noSpecial"
+                        label="&pshDlg.noSpecial.label;"
+                        accesskey="&pshDlg.noSpecial.accesskey;"
+                        flex="1"
+                        oncommand="PassHash.onRestrictSpecialChanged();"
+                        checked="false"
+                        />
+
+                    <checkbox
+                        id="digitsOnly"
+                        label="&pshDlg.digitsOnly.label;"
+                        accesskey="&pshDlg.digitsOnly.accesskey;"
+                        flex="1"
+                        oncommand="PassHash.onRestrictDigitsChanged();"
+                        checked="false"
+                        />
+
+                </vbox>
 
             </groupbox>
-
+            </vbox>
         </hbox>
 
         <spacer

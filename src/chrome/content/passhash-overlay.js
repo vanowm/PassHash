@@ -43,6 +43,7 @@ var PassHash =
 
     onLoad: function()
     {
+
         this.options = PassHashCommon.loadOptions();
         document.getElementById("contentAreaContextMenu").
                 addEventListener("popupshowing", this.onContextMenuUpdate, false);
@@ -125,6 +126,11 @@ var PassHash =
             trNode.setAttribute("style", "margin: 0;"
                                        + "padding: 0")
             var name = field.getAttribute("name");
+            if (name === "" || name === null)
+            {
+            	name = "ph_" + (new Date()).getTime();
+            	field.setAttribute("name", name);
+            }
             tableNode.appendChild(trNode);
             if (dialogButton)
                 this.createMarkerCell(doc, trNode, name, "marker", "passhashMarkerTip");
@@ -238,26 +244,38 @@ var PassHash =
             PassHash.setMarkerStyle(marker, true);
         if (textNode != null)
 	        textNode.disabled = true;
-        var params = {input: content.document.location, output: null};
-        window.openDialog("chrome://passhash/content/passhash-dialog.xul", "dlg",
-                          "modal,centerscreen", params);
-        if (textNode == null)
-					return;
+        var params = {input: content.document.location, output: null, callback: function(e)
+        	{
+//        		let textNode = PassHash.getTextNode();
+		        if (textNode == null)
+							return;
 
-        textNode.disabled = false;
-        if (marker != null)
-            PassHash.setMarkerStyle(marker, false);
-        var hashapass = params.output;
-        if (hashapass)
-        {
-            textNode.value = hashapass;
-            textNode.focus();
-            textNode.select();
-textNode.dispatchEvent(new content.UIEvent('change', {view: content, bubbles: true, cancelable: true}));
-textNode.dispatchEvent(new content.UIEvent('input', {view: content, bubbles: true, cancelable: true}));
-        }
-        else
-            textNode.focus();
+						try
+						{
+		        	textNode.disabled = false;
+		        }
+		        catch(e)
+		        {
+		        	return false
+		        };
+		        if (marker != null)
+		            PassHash.setMarkerStyle(marker, false);
+
+		        var hashapass = params.output;
+
+		        if (hashapass)
+		        {
+		            textNode.value = hashapass;
+		            textNode.focus();
+		            textNode.select();
+		textNode.dispatchEvent(new content.UIEvent('change', {view: content, bubbles: true, cancelable: true}));
+		textNode.dispatchEvent(new content.UIEvent('input', {view: content, bubbles: true, cancelable: true}));
+		        }
+		        else
+		            textNode.focus();
+        	}};
+        window.openDialog("chrome://passhash/content/passhash-dialog.xul", "dlg",
+                          "modal, centerscreen", params);
 
     },
 

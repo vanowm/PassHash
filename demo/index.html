@@ -3,14 +3,1640 @@
 
 <head>
 
-<title>Password Hasher Demo</title>
+<title>Password Hasher v1.1.9</title>
 <meta http-equiv="content-type" content="text-html; charset=utf-8">
+
+<style>
+<!--!skin:passhash-portable.css-->
+body {
+    background-color: #eeffee;
+    font-family: arial;
+}
+
+ul {
+    margin-left: 10px;
+    padding-left: 0px;
+    margin-top:0em;
+}
+
+li {
+    font-size: 10pt;
+    font-family: arial;
+    padding-top: .25em;
+    margin-top:0em;
+}
+
+.formfield {
+    font-size: 10pt;
+    font-family: serif;
+    width: 100%;
+}
+
+.formtable {
+    border: thin green solid;
+    padding: .3em;
+    width: 19em;
+}
+
+.title {
+    font-size: 10pt;
+    font-family: arial;
+    font-weight: bold;
+    color: #6060a0;
+    text-align: center;
+}
+
+.result {
+    font-family: serif;
+    background-color: #d0d0f0;
+}
+
+.formlabel {
+    font-size: 9pt;
+    font-family: arial;
+    font-weight: bold;
+    color: #607888;
+    text-align: left;
+    width: 78px;
+}
+
+.optionbox {
+    border: thin silver solid;
+}
+
+.optionlabel {
+    font-size: 9pt;
+    font-family: arial;
+    font-weight: bold;
+    color: #607888;
+    text-align: left;
+}
+
+.optiontable {
+}
+
+.option {
+    font-size: 10pt;
+    font-family: arial;
+}
+
+.noteshead {
+    font-size: 10pt;
+    font-family: arial;
+    font-weight: bold;
+    padding-top: .5em;
+    color: #336633;
+}
+
+.prompt {
+    font-size: 10pt;
+    font-family: arial;
+    font-weight: normal;
+    color: #222288;
+    height: 40px;
+}
+
+.button {
+    width: 70px;
+    
+}
+
+#bump
+{
+	width: 4em;
+}
+.password {
+    font-size: 10pt;
+    width: 100%;
+}
+
+
+textarea
+{
+	height: 4.5em;
+	word-break: keep-all;
+	font-family: fixed, monospace !important;
+	font-weight: normal;
+	border: 1px solid;
+}
+</style>
+
+<script language="JavaScript" type="text/javascript">
+<!--!content:passhash-portable.js-->
+var browser = new Object();
+browser.version = parseInt(navigator.appVersion);
+browser.isNetscape = false;
+browser.isMicrosoft = false;
+if (navigator.appName.indexOf("Netscape") != -1) 
+    browser.isNetscape = true;
+else if (navigator.appName.indexOf("Microsoft") != -1)
+    browser.isMicrosoft = true;
+
+var siteTagLast = '';
+var masterKeyLast = '';
+var isSha3 = false;
+
+function onLoad()
+{
+    if (browser.isMicrosoft)
+    {
+        document.getElementById('reveal').disabled = true;
+        document.getElementById('reveal-text').disabled = true;
+    }
+    document.getElementById('site-tag').focus();
+    setTimeout('checkChange()',1000);
+}
+
+function validate(form) 
+{
+    var siteTag   = document.getElementById('site-tag');
+    var masterKey = document.getElementById('master-key');
+    if (!siteTag.value)
+    {
+        siteTag.focus();
+        return false;
+    }
+    if (!masterKey.value)
+    {
+        masterKey.focus();
+        return false;
+    }
+    return true;
+}
+
+function onClear()
+{
+  document.getElementById('site-tag').value = "";
+  document.getElementById('master-key').value = "";
+  update();
+}
+function update(nofocus) 
+{
+    var siteTag   = document.getElementById('site-tag');
+    var masterKey = document.getElementById('master-key');
+    var hashWord  = document.getElementById('hash-word');
+    //var hashapass = b64_hmac_sha1(masterKey.value, siteTag.value).substr(0,8);
+    var hashWordSize       = document.getElementById("hashWordSize").value;
+    var requireDigit       = document.getElementById("digit").checked;
+    var requirePunctuation = document.getElementById("punctuation").checked;
+    var requireMixedCase   = document.getElementById("mixedCase").checked;
+    var restrictSpecial    = document.getElementById("noSpecial").checked;
+    var restrictDigits     = document.getElementById("digitsOnly").checked;
+    if (!siteTag.value || !masterKey.value)
+    	return;
+
+    hashWord.value = PassHashCommon.generateHashWord(
+            siteTag.value,
+            masterKey.value,
+            hashWordSize,
+            requireDigit,
+            requirePunctuation,
+            requireMixedCase,
+            restrictSpecial,
+            restrictDigits,
+            isSha3);
+    if (!nofocus)
+      hashWord.focus();
+
+    siteTagLast = siteTag.value;
+    masterKeyLast = masterKey.value;
+}
+
+function onEnterField(fld, msg)
+{
+    // Select the field
+    try
+    {
+        fld.select();
+    }
+    catch (ex) {}
+    // Set the prompt
+    document.getElementById('prompt').innerHTML = msg;
+}
+
+function checkChange()
+{
+    var siteTag   = document.getElementById('site-tag');
+    var masterKey = document.getElementById('master-key');
+    var hashWord  = document.getElementById('hash-word');
+    if (siteTag.value != siteTagLast || masterKey.value != masterKeyLast)
+    {
+        hashWord.value = '';
+        siteTagLast = siteTag.value;
+        masterKeyLast = masterKey.value;
+        onUpdate();
+    }
+    setTimeout('checkChange()', 1000);
+}
+
+function onLeaveResultField(hashWord)
+{
+    document.getElementById('prompt').innerHTML = '';
+}
+
+function onLeaveField(fld)
+{
+    // Remove the selection (is this the best way?)
+    var v = fld.value;
+    fld.value = '';
+    fld.value = v;
+    // Remove the prompt
+    document.getElementById('prompt').innerHTML = '';
+}
+
+function onReveal(fld)
+{
+    var masterKey = document.getElementById('master-key');
+    try
+    {
+        if (fld.checked)
+            masterKey.setAttribute("type", "");
+        else
+            masterKey.setAttribute("type", "password");
+    } catch (ex) {}
+    document.getElementById('master-key').focus();
+}
+
+function onNoSpecial(fld)
+{
+    document.getElementById('punctuation').disabled = fld.checked;
+    update();
+}
+
+function onDigitsOnly(fld)
+{
+    document.getElementById('punctuation').disabled = fld.checked;
+    document.getElementById("digit"      ).disabled = fld.checked;
+    document.getElementById("punctuation").disabled = fld.checked;
+    document.getElementById("mixedCase"  ).disabled = fld.checked;
+    document.getElementById("noSpecial"  ).disabled = fld.checked;
+    update();
+}
+
+function onBump()
+{
+    var siteTag = document.getElementById("site-tag");
+    siteTag.value = PassHashCommon.bumpSiteTag(siteTag.value);
+    update();
+}
+
+function onSelectSiteTag(fld)
+{
+    var siteTag = document.getElementById('site-tag');
+    siteTag.value = fld[fld.selectedIndex].text;
+    var options = fld[fld.selectedIndex].value;
+    document.getElementById("digit"      ).checked  = (options.search(/d/i) >= 0);
+    document.getElementById("punctuation").checked  = (options.search(/p/i) >= 0);
+    document.getElementById("mixedCase"  ).checked  = (options.search(/m/i) >= 0);
+    document.getElementById("noSpecial"  ).checked  = (options.search(/r/i) >= 0);
+    document.getElementById("digitsOnly" ).checked  = (options.search(/g/i) >= 0);
+    document.getElementById('punctuation').disabled = (options.search(/[rg]/i) >= 0);
+    document.getElementById("digit"      ).disabled = (options.search(/g/i) >= 0);
+    document.getElementById("punctuation").disabled = (options.search(/g/i) >= 0);
+    document.getElementById("mixedCase"  ).disabled = (options.search(/g/i) >= 0);
+    document.getElementById("noSpecial"  ).disabled = (options.search(/g/i) >= 0);
+    document.getElementById("sha3"       ).checked  = (options.search(/s/i) >= 0);
+    isSha3 = document.getElementById("sha3").checked;
+    var sizeMatch = options.match(/[0-9]+/);
+    var hashWordSize = (sizeMatch != null && sizeMatch.length > 0
+                                ? parseInt(sizeMatch[0])
+                                : 26);
+		document.getElementById("hashWordSize").value = hashWordSize;
+		onUpdate();
+    if (validate())
+        update();
+}
+
+function onLeaveSelectSiteTag(fld)
+{
+    // Remove the prompt
+    document.getElementById('prompt').innerHTML = '';
+}
+
+function filter(obj)
+{
+	let s = obj.selectionStart,
+			e = obj.selectionEnd,
+			val = Math.min(~~obj.getAttribute("max"), Math.max(~~obj.getAttribute("min"), ~~obj.value.replace(/[^0-9]/g, "")));
+	obj.value = val;
+
+	if (e !== null)
+		obj.selectionEnd = e;
+	if (s !== null)
+		obj.selectionStart = s;
+}
+
+function onSha3Change()
+{
+	isSha3 = document.getElementById("sha3").checked;
+	update();
+}
+
+function onUpdate(obj)
+{
+	let isSize = true;
+	if (!obj)
+	{
+		isSize = false;
+	}
+	obj = document.getElementById("hashWordSize");
+	if (isSize)
+	{
+		filter(obj);
+	}
+	if (obj.value > 26)
+	{
+		document.getElementById("sha3").checked = true;
+		document.getElementById("sha3").disabled = true;
+	}
+	else
+	{
+		document.getElementById("sha3").checked = isSha3;
+		document.getElementById("sha3").disabled = false;
+	}
+	update(true);
+
+	if (!isSize || obj.value == this.hashWordSizePrev)
+		return;
+
+	this.hashWordSizePrev = obj.value;
+}
+</script>
+
+<script language="JavaScript" type="text/javascript">
+<!--!content:passhash-sha1.js-->
+/*
+ * A JavaScript implementation of the Secure Hash Algorithm, SHA-1, as defined
+ * in FIPS PUB 180-1
+ * Version 2.1a Copyright Paul Johnston 2000 - 2002.
+ * Other contributors: Greg Holt, Andrew Kepert, Ydnar, Lostinet
+ * Distributed under the BSD License
+ * See http://pajhome.org.uk/crypt/md5 for details.
+ */
+
+/*
+ * Configurable variables. You may need to tweak these to be compatible with
+ * the server-side, but the defaults work in most cases.
+ */
+var hexcase = 0;  /* hex output format. 0 - lowercase; 1 - uppercase        */
+var b64pad  = ""; /* base-64 pad character. "=" for strict RFC compliance   */
+var chrsz   = 8;  /* bits per input character. 8 - ASCII; 16 - Unicode      */
+
+/*
+ * These are the functions you'll usually want to call
+ * They take string arguments and return either hex or base-64 encoded strings
+ */
+function hex_sha1(s){return binb2hex(core_sha1(str2binb(s),s.length * chrsz));}
+function b64_sha1(s){return binb2b64(core_sha1(str2binb(s),s.length * chrsz));}
+function str_sha1(s){return binb2str(core_sha1(str2binb(s),s.length * chrsz));}
+function hex_hmac_sha1(key, data){ return binb2hex(core_hmac_sha1(key, data));}
+function b64_hmac_sha1(key, data){ return binb2b64(core_hmac_sha1(key, data));}
+function str_hmac_sha1(key, data){ return binb2str(core_hmac_sha1(key, data));}
+
+/*
+ * Perform a simple self-test to see if the VM is working
+ */
+function sha1_vm_test()
+{
+  return hex_sha1("abc") == "a9993e364706816aba3e25717850c26c9cd0d89d";
+}
+
+/*
+ * Calculate the SHA-1 of an array of big-endian words, and a bit length
+ */
+function core_sha1(x, len)
+{
+  /* append padding */
+  /* SC - Get rid of warning */
+  var i = (len >> 5);
+  if (x[i] == undefined)
+      x[i]  = 0x80 << (24 - len % 32);
+  else
+      x[i] |= 0x80 << (24 - len % 32);
+  /*x[len >> 5] |= 0x80 << (24 - len % 32);*/
+  x[((len + 64 >> 9) << 4) + 15] = len;
+
+  var w = Array(80);
+  var a =  1732584193;
+  var b = -271733879;
+  var c = -1732584194;
+  var d =  271733878;
+  var e = -1009589776;
+
+  for(var i = 0; i < x.length; i += 16)
+  {
+    var olda = a;
+    var oldb = b;
+    var oldc = c;
+    var oldd = d;
+    var olde = e;
+
+    for(var j = 0; j < 80; j++)
+    {
+      if(j < 16) w[j] = x[i + j];
+      else w[j] = rol(w[j-3] ^ w[j-8] ^ w[j-14] ^ w[j-16], 1);
+      var t = safe_add(safe_add(rol(a, 5), sha1_ft(j, b, c, d)),
+                       safe_add(safe_add(e, w[j]), sha1_kt(j)));
+      e = d;
+      d = c;
+      c = rol(b, 30);
+      b = a;
+      a = t;
+    }
+
+    a = safe_add(a, olda);
+    b = safe_add(b, oldb);
+    c = safe_add(c, oldc);
+    d = safe_add(d, oldd);
+    e = safe_add(e, olde);
+  }
+  return Array(a, b, c, d, e);
+
+}
+
+/*
+ * Perform the appropriate triplet combination function for the current
+ * iteration
+ */
+function sha1_ft(t, b, c, d)
+{
+  if(t < 20) return (b & c) | ((~b) & d);
+  if(t < 40) return b ^ c ^ d;
+  if(t < 60) return (b & c) | (b & d) | (c & d);
+  return b ^ c ^ d;
+}
+
+/*
+ * Determine the appropriate additive constant for the current iteration
+ */
+function sha1_kt(t)
+{
+  return (t < 20) ?  1518500249 : (t < 40) ?  1859775393 :
+         (t < 60) ? -1894007588 : -899497514;
+}
+
+/*
+ * Calculate the HMAC-SHA1 of a key and some data
+ */
+function core_hmac_sha1(key, data)
+{
+  var bkey = str2binb(key);
+  if(bkey.length > 16) bkey = core_sha1(bkey, key.length * chrsz);
+
+  var ipad = Array(16), opad = Array(16);
+  for(var i = 0; i < 16; i++)
+  {
+    /* SC - Get rid of warning */
+    var k = (bkey[i] != undefined ? bkey[i] : 0);
+    ipad[i] = k ^ 0x36363636;
+    opad[i] = k ^ 0x5C5C5C5C;
+/*  ipad[i] = bkey[i] ^ 0x36363636;
+    opad[i] = bkey[i] ^ 0x5C5C5C5C;*/
+  }
+
+  var hash = core_sha1(ipad.concat(str2binb(data)), 512 + data.length * chrsz);
+  return core_sha1(opad.concat(hash), 512 + 160);
+}
+
+/*
+ * Add integers, wrapping at 2^32. This uses 16-bit operations internally
+ * to work around bugs in some JS interpreters.
+ */
+function safe_add(x, y)
+{
+  var lsw = (x & 0xFFFF) + (y & 0xFFFF);
+  var msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+  return (msw << 16) | (lsw & 0xFFFF);
+}
+
+/*
+ * Bitwise rotate a 32-bit number to the left.
+ */
+function rol(num, cnt)
+{
+  return (num << cnt) | (num >>> (32 - cnt));
+}
+
+/*
+ * Convert an 8-bit or 16-bit string to an array of big-endian words
+ * In 8-bit function, characters >255 have their hi-byte silently ignored.
+ */
+function str2binb(str)
+{
+  var bin = Array();
+  var mask = (1 << chrsz) - 1;
+  /* SC - Get rid of warnings */
+  for(var i = 0; i < str.length * chrsz; i += chrsz)
+  {
+    if (bin[i>>5] != undefined)
+      bin[i>>5] |= (str.charCodeAt(i / chrsz) & mask) << (32 - chrsz - i%32);
+    else
+      bin[i>>5]  = (str.charCodeAt(i / chrsz) & mask) << (32 - chrsz - i%32);
+  }
+  /*for(var i = 0; i < str.length * chrsz; i += chrsz)
+      bin[i>>5] |= (str.charCodeAt(i / chrsz) & mask) << (32 - chrsz - i%32);*/
+  return bin;
+}
+
+/*
+ * Convert an array of big-endian words to a string
+ */
+function binb2str(bin)
+{
+  var str = "";
+  var mask = (1 << chrsz) - 1;
+  for(var i = 0; i < bin.length * 32; i += chrsz)
+    str += String.fromCharCode((bin[i>>5] >>> (32 - chrsz - i%32)) & mask);
+  return str;
+}
+
+/*
+ * Convert an array of big-endian words to a hex string.
+ */
+function binb2hex(binarray)
+{
+  var hex_tab = hexcase ? "0123456789ABCDEF" : "0123456789abcdef";
+  var str = "";
+  for(var i = 0; i < binarray.length * 4; i++)
+  {
+    str += hex_tab.charAt((binarray[i>>2] >> ((3 - i%4)*8+4)) & 0xF) +
+           hex_tab.charAt((binarray[i>>2] >> ((3 - i%4)*8  )) & 0xF);
+  }
+  return str;
+}
+
+/*
+ * Convert an array of big-endian words to a base-64 string
+ */
+function binb2b64(binarray)
+{
+  var tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  var str = "";
+  for(var i = 0; i < binarray.length * 4; i += 3)
+  {
+    /* SC - Get rid of warning */
+    var b1 = binarray[i   >> 2] != undefined ? ((binarray[i   >> 2] >> 8 * (3 -  i   %4)) & 0xFF) << 16 : 0;
+    var b2 = binarray[i+1 >> 2] != undefined ? ((binarray[i+1 >> 2] >> 8 * (3 - (i+1)%4)) & 0xFF) << 8  : 0;
+    var b3 = binarray[i+2 >> 2] != undefined ? ((binarray[i+2 >> 2] >> 8 * (3 - (i+2)%4)) & 0xFF)       : 0;
+    var triplet = b1 | b2 | b3;
+    /*var triplet = (((binarray[i   >> 2] >> 8 * (3 -  i   %4)) & 0xFF) << 16)
+                | (((binarray[i+1 >> 2] >> 8 * (3 - (i+1)%4)) & 0xFF) << 8 )
+                |  ((binarray[i+2 >> 2] >> 8 * (3 - (i+2)%4)) & 0xFF);*/
+    for(var j = 0; j < 4; j++)
+    {
+      if(i * 8 + j * 6 > binarray.length * 32) str += b64pad;
+      else str += tab.charAt((triplet >> 6*(3-j)) & 0x3F);
+    }
+  }
+  return str;
+}
+</script>
+
+<script language="JavaScript" type="text/javascript">
+<!--!content:passhash-sha3.js-->
+/**
+ * [js-sha3]{@link https://github.com/emn178/js-sha3}
+ *
+ * @version 0.8.0
+ * @author Chen, Yi-Cyuan [emn178@gmail.com]
+ * @copyright Chen, Yi-Cyuan 2015-2018
+ * @license MIT
+ */
+!function(){"use strict";function t(t,e,r){this.blocks=[],this.s=[],this.padding=e,this.outputBits=r,this.reset=!0,this.finalized=!1,this.block=0,this.start=0,this.blockCount=1600-(t<<1)>>5,this.byteCount=this.blockCount<<2,this.outputBlocks=r>>5,this.extraBytes=(31&r)>>3;for(var n=0;n<50;++n)this.s[n]=0}function e(e,r,n){t.call(this,e,r,n)}var r="input is invalid type",n="object"==typeof window,i=n?window:{};i.JS_SHA3_NO_WINDOW&&(n=!1);var o=!n&&"object"==typeof self;!i.JS_SHA3_NO_NODE_JS&&"object"==typeof process&&process.versions&&process.versions.node?i=global:o&&(i=self);var a=!i.JS_SHA3_NO_COMMON_JS&&"object"==typeof module&&module.exports,s="function"==typeof define&&define.amd,u=!i.JS_SHA3_NO_ARRAY_BUFFER&&"undefined"!=typeof ArrayBuffer,f="0123456789abcdef".split(""),c=[4,1024,262144,67108864],h=[0,8,16,24],p=[1,0,32898,0,32906,2147483648,2147516416,2147483648,32907,0,2147483649,0,2147516545,2147483648,32777,2147483648,138,0,136,0,2147516425,0,2147483658,0,2147516555,0,139,2147483648,32905,2147483648,32771,2147483648,32770,2147483648,128,2147483648,32778,0,2147483658,2147483648,2147516545,2147483648,32896,2147483648,2147483649,0,2147516424,2147483648],d=[224,256,384,512],l=[128,256],y=["hex","buffer","arrayBuffer","array","digest"],b={128:168,256:136};!i.JS_SHA3_NO_NODE_JS&&Array.isArray||(Array.isArray=function(t){return"[object Array]"===Object.prototype.toString.call(t)}),!u||!i.JS_SHA3_NO_ARRAY_BUFFER_IS_VIEW&&ArrayBuffer.isView||(ArrayBuffer.isView=function(t){return"object"==typeof t&&t.buffer&&t.buffer.constructor===ArrayBuffer});for(var A=function(e,r,n){return function(i){return new t(e,r,e).update(i)[n]()}},w=function(e,r,n){return function(i,o){return new t(e,r,o).update(i)[n]()}},v=function(t,e,r){return function(e,n,i,o){return S["cshake"+t].update(e,n,i,o)[r]()}},B=function(t,e,r){return function(e,n,i,o){return S["kmac"+t].update(e,n,i,o)[r]()}},g=function(t,e,r,n){for(var i=0;i<y.length;++i){var o=y[i];t[o]=e(r,n,o)}return t},_=function(e,r){var n=A(e,r,"hex");return n.create=function(){return new t(e,r,e)},n.update=function(t){return n.create().update(t)},g(n,A,e,r)},k=[{name:"keccak",padding:[1,256,65536,16777216],bits:d,createMethod:_},{name:"sha3",padding:[6,1536,393216,100663296],bits:d,createMethod:_},{name:"shake",padding:[31,7936,2031616,520093696],bits:l,createMethod:function(e,r){var n=w(e,r,"hex");return n.create=function(n){return new t(e,r,n)},n.update=function(t,e){return n.create(e).update(t)},g(n,w,e,r)}},{name:"cshake",padding:c,bits:l,createMethod:function(e,r){var n=b[e],i=v(e,0,"hex");return i.create=function(i,o,a){return o||a?new t(e,r,i).bytepad([o,a],n):S["shake"+e].create(i)},i.update=function(t,e,r,n){return i.create(e,r,n).update(t)},g(i,v,e,r)}},{name:"kmac",padding:c,bits:l,createMethod:function(t,r){var n=b[t],i=B(t,0,"hex");return i.create=function(i,o,a){return new e(t,r,o).bytepad(["KMAC",a],n).bytepad([i],n)},i.update=function(t,e,r,n){return i.create(t,r,n).update(e)},g(i,B,t,r)}}],S={},C=[],x=0;x<k.length;++x)for(var m=k[x],E=m.bits,O=0;O<E.length;++O){var z=m.name+"_"+E[O];if(C.push(z),S[z]=m.createMethod(E[O],m.padding),"sha3"!==m.name){var N=m.name+E[O];C.push(N),S[N]=S[z]}}t.prototype.update=function(t){if(this.finalized)throw new Error("finalize already called");var e,n=typeof t;if("string"!==n){if("object"!==n)throw new Error(r);if(null===t)throw new Error(r);if(u&&t.constructor===ArrayBuffer)t=new Uint8Array(t);else if(!(Array.isArray(t)||u&&ArrayBuffer.isView(t)))throw new Error(r);e=!0}for(var i,o,a=this.blocks,s=this.byteCount,f=t.length,c=this.blockCount,p=0,d=this.s;p<f;){if(this.reset)for(this.reset=!1,a[0]=this.block,i=1;i<c+1;++i)a[i]=0;if(e)for(i=this.start;p<f&&i<s;++p)a[i>>2]|=t[p]<<h[3&i++];else for(i=this.start;p<f&&i<s;++p)(o=t.charCodeAt(p))<128?a[i>>2]|=o<<h[3&i++]:o<2048?(a[i>>2]|=(192|o>>6)<<h[3&i++],a[i>>2]|=(128|63&o)<<h[3&i++]):o<55296||o>=57344?(a[i>>2]|=(224|o>>12)<<h[3&i++],a[i>>2]|=(128|o>>6&63)<<h[3&i++],a[i>>2]|=(128|63&o)<<h[3&i++]):(o=65536+((1023&o)<<10|1023&t.charCodeAt(++p)),a[i>>2]|=(240|o>>18)<<h[3&i++],a[i>>2]|=(128|o>>12&63)<<h[3&i++],a[i>>2]|=(128|o>>6&63)<<h[3&i++],a[i>>2]|=(128|63&o)<<h[3&i++]);if(this.lastByteIndex=i,i>=s){for(this.start=i-s,this.block=a[c],i=0;i<c;++i)d[i]^=a[i];j(d),this.reset=!0}else this.start=i}return this},t.prototype.encode=function(t,e){var r=255&t,n=1,i=[r];for(r=255&(t>>=8);r>0;)i.unshift(r),r=255&(t>>=8),++n;return e?i.push(n):i.unshift(n),this.update(i),i.length},t.prototype.encodeString=function(t){var e,n=typeof t;if("string"!==n){if("object"!==n)throw new Error(r);if(null===t)throw new Error(r);if(u&&t.constructor===ArrayBuffer)t=new Uint8Array(t);else if(!(Array.isArray(t)||u&&ArrayBuffer.isView(t)))throw new Error(r);e=!0}var i=0,o=t.length;if(e)i=o;else for(var a=0;a<t.length;++a){var s=t.charCodeAt(a);s<128?i+=1:s<2048?i+=2:s<55296||s>=57344?i+=3:(s=65536+((1023&s)<<10|1023&t.charCodeAt(++a)),i+=4)}return i+=this.encode(8*i),this.update(t),i},t.prototype.bytepad=function(t,e){for(var r=this.encode(e),n=0;n<t.length;++n)r+=this.encodeString(t[n]);var i=e-r%e,o=[];return o.length=i,this.update(o),this},t.prototype.finalize=function(){if(!this.finalized){this.finalized=!0;var t=this.blocks,e=this.lastByteIndex,r=this.blockCount,n=this.s;if(t[e>>2]|=this.padding[3&e],this.lastByteIndex===this.byteCount)for(t[0]=t[r],e=1;e<r+1;++e)t[e]=0;for(t[r-1]|=2147483648,e=0;e<r;++e)n[e]^=t[e];j(n)}},t.prototype.toString=t.prototype.hex=function(){this.finalize();for(var t,e=this.blockCount,r=this.s,n=this.outputBlocks,i=this.extraBytes,o=0,a=0,s="";a<n;){for(o=0;o<e&&a<n;++o,++a)t=r[o],s+=f[t>>4&15]+f[15&t]+f[t>>12&15]+f[t>>8&15]+f[t>>20&15]+f[t>>16&15]+f[t>>28&15]+f[t>>24&15];a%e==0&&(j(r),o=0)}return i&&(t=r[o],s+=f[t>>4&15]+f[15&t],i>1&&(s+=f[t>>12&15]+f[t>>8&15]),i>2&&(s+=f[t>>20&15]+f[t>>16&15])),s},t.prototype.arrayBuffer=function(){this.finalize();var t,e=this.blockCount,r=this.s,n=this.outputBlocks,i=this.extraBytes,o=0,a=0,s=this.outputBits>>3;t=i?new ArrayBuffer(n+1<<2):new ArrayBuffer(s);for(var u=new Uint32Array(t);a<n;){for(o=0;o<e&&a<n;++o,++a)u[a]=r[o];a%e==0&&j(r)}return i&&(u[o]=r[o],t=t.slice(0,s)),t},t.prototype.buffer=t.prototype.arrayBuffer,t.prototype.digest=t.prototype.array=function(){this.finalize();for(var t,e,r=this.blockCount,n=this.s,i=this.outputBlocks,o=this.extraBytes,a=0,s=0,u=[];s<i;){for(a=0;a<r&&s<i;++a,++s)t=s<<2,e=n[a],u[t]=255&e,u[t+1]=e>>8&255,u[t+2]=e>>16&255,u[t+3]=e>>24&255;s%r==0&&j(n)}return o&&(t=s<<2,e=n[a],u[t]=255&e,o>1&&(u[t+1]=e>>8&255),o>2&&(u[t+2]=e>>16&255)),u},(e.prototype=new t).finalize=function(){return this.encode(this.outputBits,!0),t.prototype.finalize.call(this)};var j=function(t){var e,r,n,i,o,a,s,u,f,c,h,d,l,y,b,A,w,v,B,g,_,k,S,C,x,m,E,O,z,N,j,J,M,H,I,R,U,V,F,D,W,Y,K,q,G,L,P,Q,T,X,Z,$,tt,et,rt,nt,it,ot,at,st,ut,ft,ct;for(n=0;n<48;n+=2)i=t[0]^t[10]^t[20]^t[30]^t[40],o=t[1]^t[11]^t[21]^t[31]^t[41],a=t[2]^t[12]^t[22]^t[32]^t[42],s=t[3]^t[13]^t[23]^t[33]^t[43],u=t[4]^t[14]^t[24]^t[34]^t[44],f=t[5]^t[15]^t[25]^t[35]^t[45],c=t[6]^t[16]^t[26]^t[36]^t[46],h=t[7]^t[17]^t[27]^t[37]^t[47],e=(d=t[8]^t[18]^t[28]^t[38]^t[48])^(a<<1|s>>>31),r=(l=t[9]^t[19]^t[29]^t[39]^t[49])^(s<<1|a>>>31),t[0]^=e,t[1]^=r,t[10]^=e,t[11]^=r,t[20]^=e,t[21]^=r,t[30]^=e,t[31]^=r,t[40]^=e,t[41]^=r,e=i^(u<<1|f>>>31),r=o^(f<<1|u>>>31),t[2]^=e,t[3]^=r,t[12]^=e,t[13]^=r,t[22]^=e,t[23]^=r,t[32]^=e,t[33]^=r,t[42]^=e,t[43]^=r,e=a^(c<<1|h>>>31),r=s^(h<<1|c>>>31),t[4]^=e,t[5]^=r,t[14]^=e,t[15]^=r,t[24]^=e,t[25]^=r,t[34]^=e,t[35]^=r,t[44]^=e,t[45]^=r,e=u^(d<<1|l>>>31),r=f^(l<<1|d>>>31),t[6]^=e,t[7]^=r,t[16]^=e,t[17]^=r,t[26]^=e,t[27]^=r,t[36]^=e,t[37]^=r,t[46]^=e,t[47]^=r,e=c^(i<<1|o>>>31),r=h^(o<<1|i>>>31),t[8]^=e,t[9]^=r,t[18]^=e,t[19]^=r,t[28]^=e,t[29]^=r,t[38]^=e,t[39]^=r,t[48]^=e,t[49]^=r,y=t[0],b=t[1],L=t[11]<<4|t[10]>>>28,P=t[10]<<4|t[11]>>>28,O=t[20]<<3|t[21]>>>29,z=t[21]<<3|t[20]>>>29,st=t[31]<<9|t[30]>>>23,ut=t[30]<<9|t[31]>>>23,Y=t[40]<<18|t[41]>>>14,K=t[41]<<18|t[40]>>>14,H=t[2]<<1|t[3]>>>31,I=t[3]<<1|t[2]>>>31,A=t[13]<<12|t[12]>>>20,w=t[12]<<12|t[13]>>>20,Q=t[22]<<10|t[23]>>>22,T=t[23]<<10|t[22]>>>22,N=t[33]<<13|t[32]>>>19,j=t[32]<<13|t[33]>>>19,ft=t[42]<<2|t[43]>>>30,ct=t[43]<<2|t[42]>>>30,et=t[5]<<30|t[4]>>>2,rt=t[4]<<30|t[5]>>>2,R=t[14]<<6|t[15]>>>26,U=t[15]<<6|t[14]>>>26,v=t[25]<<11|t[24]>>>21,B=t[24]<<11|t[25]>>>21,X=t[34]<<15|t[35]>>>17,Z=t[35]<<15|t[34]>>>17,J=t[45]<<29|t[44]>>>3,M=t[44]<<29|t[45]>>>3,C=t[6]<<28|t[7]>>>4,x=t[7]<<28|t[6]>>>4,nt=t[17]<<23|t[16]>>>9,it=t[16]<<23|t[17]>>>9,V=t[26]<<25|t[27]>>>7,F=t[27]<<25|t[26]>>>7,g=t[36]<<21|t[37]>>>11,_=t[37]<<21|t[36]>>>11,$=t[47]<<24|t[46]>>>8,tt=t[46]<<24|t[47]>>>8,q=t[8]<<27|t[9]>>>5,G=t[9]<<27|t[8]>>>5,m=t[18]<<20|t[19]>>>12,E=t[19]<<20|t[18]>>>12,ot=t[29]<<7|t[28]>>>25,at=t[28]<<7|t[29]>>>25,D=t[38]<<8|t[39]>>>24,W=t[39]<<8|t[38]>>>24,k=t[48]<<14|t[49]>>>18,S=t[49]<<14|t[48]>>>18,t[0]=y^~A&v,t[1]=b^~w&B,t[10]=C^~m&O,t[11]=x^~E&z,t[20]=H^~R&V,t[21]=I^~U&F,t[30]=q^~L&Q,t[31]=G^~P&T,t[40]=et^~nt&ot,t[41]=rt^~it&at,t[2]=A^~v&g,t[3]=w^~B&_,t[12]=m^~O&N,t[13]=E^~z&j,t[22]=R^~V&D,t[23]=U^~F&W,t[32]=L^~Q&X,t[33]=P^~T&Z,t[42]=nt^~ot&st,t[43]=it^~at&ut,t[4]=v^~g&k,t[5]=B^~_&S,t[14]=O^~N&J,t[15]=z^~j&M,t[24]=V^~D&Y,t[25]=F^~W&K,t[34]=Q^~X&$,t[35]=T^~Z&tt,t[44]=ot^~st&ft,t[45]=at^~ut&ct,t[6]=g^~k&y,t[7]=_^~S&b,t[16]=N^~J&C,t[17]=j^~M&x,t[26]=D^~Y&H,t[27]=W^~K&I,t[36]=X^~$&q,t[37]=Z^~tt&G,t[46]=st^~ft&et,t[47]=ut^~ct&rt,t[8]=k^~y&A,t[9]=S^~b&w,t[18]=J^~C&m,t[19]=M^~x&E,t[28]=Y^~H&R,t[29]=K^~I&U,t[38]=$^~q&L,t[39]=tt^~G&P,t[48]=ft^~et&nt,t[49]=ct^~rt&it,t[0]^=p[n],t[1]^=p[n+1]};if(a)module.exports=S;else{for(x=0;x<C.length;++x)i[C[x]]=S[C[x]];s&&define(function(){return S})}}();
+</script>
+
+<script language="JavaScript" type="text/javascript">
+<!--!content:passhash-common.js-->
+/* ***** BEGIN LICENSE BLOCK *****
+ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * http://www.mozilla.org/MPL/
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ *
+ * The Original Code is Password Hasher
+ *
+ * The Initial Developer of the Original Code is Steve Cooper.
+ * Portions created by the Initial Developer are Copyright (C) 2006
+ * the Initial Developer. All Rights Reserved.
+ *
+ * Contributor(s): (none)
+ *
+ * Alternatively, the contents of this file may be used under the terms of
+ * either the GNU General Public License Version 2 or later (the "GPL"), or
+ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ * in which case the provisions of the GPL or the LGPL are applicable instead
+ * of those above. If you wish to allow use of your version of this file only
+ * under the terms of either the GPL or the LGPL, and not to allow others to
+ * use your version of this file under the terms of the MPL, indicate your
+ * decision by deleting the provisions above and replace them with the notice
+ * and other provisions required by the GPL or the LGPL. If you do not delete
+ * the provisions above, a recipient may use your version of this file under
+ * the terms of any one of the MPL, the GPL or the LGPL.
+ *
+ * ***** END LICENSE BLOCK ***** */
+
+var PassHashCommon =
+{
+    // Artificial host name used for for saving to the password database
+    host: "passhash.passhash",
+
+    log: function(msg)
+    {
+        var consoleService = Components.classes["@mozilla.org/consoleservice;1"]
+                                .getService(Components.interfaces.nsIConsoleService);
+        consoleService.logStringMessage(msg);
+    },
+
+    loadOptions: function()
+    {
+        var opts = this.createOptions();
+        var prefs = Components.classes["@mozilla.org/preferences-service;1"].
+                        getService(Components.interfaces.nsIPrefService).getBranch("passhash.");
+        var forceSave = false;
+        if (prefs.prefHasUserValue("optSecurityLevel"))
+        {
+            opts.securityLevel = prefs.getIntPref("optSecurityLevel");
+            opts.firstTime = false;
+            forceSave = true;
+        }
+        if (prefs.prefHasUserValue("optGuessSiteTag"))
+            opts.guessSiteTag = prefs.getBoolPref("optGuessSiteTag");
+        if (prefs.prefHasUserValue("optRememberSiteTag"))
+            opts.rememberSiteTag = prefs.getBoolPref("optRememberSiteTag");
+        if (prefs.prefHasUserValue("optRememberMasterKey"))
+            opts.rememberMasterKey = prefs.getBoolPref("optRememberMasterKey");
+        if (prefs.prefHasUserValue("optRevealSiteTag"))
+            opts.revealSiteTag = prefs.getBoolPref("optRevealSiteTag");
+        if (prefs.prefHasUserValue("optRevealHashWord"))
+            opts.revealHashWord = prefs.getBoolPref("optRevealHashWord");
+        if (prefs.prefHasUserValue("optShowMarker"))
+            opts.showMarker = prefs.getBoolPref("optShowMarker");
+        if (prefs.prefHasUserValue("optUnmaskMarker"))
+            opts.unmaskMarker = prefs.getBoolPref("optUnmaskMarker");
+        if (prefs.prefHasUserValue("optGuessFullDomain"))
+            opts.guessFullDomain = prefs.getBoolPref("optGuessFullDomain");
+        if (prefs.prefHasUserValue("optDigitDefault"))
+            opts.digitDefault = prefs.getBoolPref("optDigitDefault");
+        if (prefs.prefHasUserValue("optPunctuationDefault"))
+            opts.punctuationDefault = prefs.getBoolPref("optPunctuationDefault");
+        if (prefs.prefHasUserValue("optMixedCaseDefault"))
+            opts.mixedCaseDefault = prefs.getBoolPref("optMixedCaseDefault");
+        if (prefs.prefHasUserValue("optHashWordSizeDefault"))
+            opts.hashWordSizeDefault = prefs.getIntPref("optHashWordSizeDefault");
+        if (prefs.prefHasUserValue("optShortcutKeyCode"))
+            opts.shortcutKeyCode = prefs.getCharPref("optShortcutKeyCode");
+        if (!opts.shortcutKeyCode)
+        {
+            // Set shortcut key to XUL-defined default.
+            forceSave = true;
+            var elementKey = document.getElementById("key_passhash");
+            if (elementKey != null)
+            {
+                opts.shortcutKeyCode = elementKey.getAttribute("key");
+                if (!opts.shortcutKeyCode)
+                    opts.shortcutKeyCode = elementKey.getAttribute("keycode");
+            }
+        }
+        if (prefs.prefHasUserValue("optShortcutKeyMods"))
+            opts.shortcutKeyMods = prefs.getCharPref("optShortcutKeyMods");
+        if (!opts.shortcutKeyMods)
+        {
+            // Set shortcut modifiers to XUL-defined default.
+            forceSave = true;
+            var elementKey = document.getElementById("key_passhash");
+            if (elementKey != null)
+                opts.shortcutKeyMods = elementKey.getAttribute("modifiers");
+        }
+        if (prefs.prefHasUserValue("optSha3Default"))
+            opts.sha3Default = prefs.getBoolPref("optSha3Default");
+        // Force saving options if the key options are not present to give them visibility
+        if (forceSave)
+            this.saveOptions(opts);
+        return opts;
+    },
+
+    createOptions: function()
+    {
+        var opts = new Object();
+        opts.securityLevel       = 2;
+        opts.guessSiteTag        = true;
+        opts.rememberSiteTag     = true;
+        opts.rememberMasterKey   = false;
+        opts.revealSiteTag       = true;
+        opts.revealHashWord      = false;
+        opts.showMarker          = true;
+        opts.unmaskMarker        = false;
+        opts.guessFullDomain     = false;
+        opts.digitDefault        = true;
+        opts.punctuationDefault  = true;
+        opts.mixedCaseDefault    = true;
+        opts.hashWordSizeDefault = 26;
+        opts.firstTime           = true;
+        opts.shortcutKeyCode     = "";
+        opts.shortcutKeyMods     = "";
+        opts.sha3                = false;
+        return opts;
+    },
+
+    saveOptions: function(opts)
+    {
+        var prefs = Components.classes["@mozilla.org/preferences-service;1"].
+                        getService(Components.interfaces.nsIPrefService).getBranch("passhash.");
+        prefs.setIntPref( "optSecurityLevel",       opts.securityLevel);
+        prefs.setBoolPref("optGuessSiteTag",        opts.guessSiteTag);
+        prefs.setBoolPref("optRememberSiteTag",     opts.rememberSiteTag);
+        prefs.setBoolPref("optRememberMasterKey",   opts.rememberMasterKey);
+        prefs.setBoolPref("optRevealSiteTag",       opts.revealSiteTag);
+        prefs.setBoolPref("optRevealHashWord",      opts.revealHashWord);
+        prefs.setBoolPref("optShowMarker",          opts.showMarker);
+        prefs.setBoolPref("optUnmaskMarker",        opts.unmaskMarker);
+        prefs.setBoolPref("optGuessFullDomain",     opts.guessFullDomain);
+        prefs.setBoolPref("optDigitDefault",        opts.digitDefault);
+        prefs.setBoolPref("optPunctuationDefault",  opts.punctuationDefault);
+        prefs.setBoolPref("optMixedCaseDefault",    opts.mixedCaseDefault);
+        prefs.setIntPref( "optHashWordSizeDefault", opts.hashWordSizeDefault);
+        prefs.setCharPref("optShortcutKeyCode",     opts.shortcutKeyCode);
+        prefs.setCharPref("optShortcutKeyMods",     opts.shortcutKeyMods);
+        prefs.setBoolPref("optSha3Default",         opts.sha3Default);
+    },
+
+    loadSecureValue: function(option, name, suffix, valueDefault)
+    {
+        return (this.hasLoginManager()
+                    ? this.loadLoginManagerValue(option, name, suffix, valueDefault)
+                    : this.loadPasswordManagerValue(option, name, suffix, valueDefault));
+    },
+
+   loadLoginManagerValue: function(option, name, suffix, valueDefault)
+    {
+        var user = (suffix ? name + "-" + suffix : name);
+        var value = valueDefault;
+        if (option && suffix != null)
+        {
+            var login = this.findLoginManagerUserLogin(user);
+            if (login != null && login.password != "" && login.password != "n/a")
+                value = login.password;
+        }
+        return value;
+    },
+
+    loadPasswordManagerValue: function(option, name, suffix, valueDefault)
+    {
+        var user = (suffix ? name + "-" + suffix : name);
+        var value = valueDefault;
+        var found = false;
+        if (option && suffix != null)
+        {
+            var passwordManager = Components.classes["@mozilla.org/passwordmanager;1"]
+                                            .getService(Components.interfaces.nsIPasswordManager);
+            var e = passwordManager.enumerator;
+            while (!found && e.hasMoreElements())
+            {
+                try
+                {
+                    var pass = e.getNext().QueryInterface(Components.interfaces.nsIPassword);
+                    if (pass.host == this.host && pass.user == user)
+                    {
+                         value = pass.password;
+                         found = true;
+                    }
+                }
+                catch (ex) {}
+            }
+        }
+        return value;
+    },
+
+    saveSecureValue: function(option, name, suffix, value)
+    {
+        return (this.hasLoginManager()
+                    ? this.saveLoginManagerValue(option, name, suffix, value)
+                    : this.savePasswordManagerValue(option, name, suffix, value));
+    },
+
+    saveLoginManagerValue: function(option, name, suffix, value)
+    {
+        if (!value || suffix == null)
+            return false;
+        var valueSave = (option ? value : "n/a");
+        var user = (suffix ? name + "-" + suffix : name);
+
+        var loginManager = Components.classes["@mozilla.org/login-manager;1"].
+                                getService(Components.interfaces.nsILoginManager);
+
+        var newLogin = Components.classes["@mozilla.org/login-manager/loginInfo;1"].
+                                createInstance(Components.interfaces.nsILoginInfo);
+
+        newLogin.init(this.host, 'passhash', null, user, valueSave, "", "");
+
+        var currentLogin = this.findLoginManagerUserLogin(user);
+
+        if ( currentLogin == null)
+            loginManager.addLogin(newLogin);
+        else
+            loginManager.modifyLogin(currentLogin, newLogin);
+        return true;
+    },
+
+    savePasswordManagerValue: function(option, name, suffix, value)
+    {
+        if (!value || suffix == null)
+            return false;
+        var valueSave = (option ? value : "");
+        var user = (suffix ? name + "-" + suffix : name);
+        var passwordManager = Components.classes["@mozilla.org/passwordmanager;1"]
+                                        .getService(Components.interfaces.nsIPasswordManager);
+        try
+        {
+            // Firefox 2 seems to lose info from subsequent addUser calls
+            // addUser on an existing host/user after restarting.
+            passwordManager.removeUser(this.host, user);
+        }
+        catch (ex) {}
+        passwordManager.addUser(this.host, user, valueSave);
+        return true;
+    },
+
+    hasLoginManager: function()
+    {
+        return ("@mozilla.org/login-manager;1" in Components.classes);
+    },
+
+    findLoginManagerUserLogin: function(user)
+    {
+        // Find user from returned array of nsILoginInfo objects
+        var logins = this.findAllLoginManagerLogins();
+        for (var i = 0; i < logins.length; i++)
+            if (logins[i].username == user)
+                return logins[i];
+        return null;
+    },
+
+    findAllLoginManagerLogins: function()
+    {
+        var loginManager = Components.classes["@mozilla.org/login-manager;1"].
+                                getService(Components.interfaces.nsILoginManager);
+        return loginManager.findLogins({}, this.host, "passhash", null);
+    },
+
+    // TODO: There's probably a better way
+    getDomain: function(input)
+    {
+        var h = input.host.split(".");
+        if (h.length <= 1)
+            return null;
+        // Handle domains like co.uk
+        if (h.length > 2 && h[h.length-1].length == 2 && h[h.length-2] == "co")
+            return h[h.length-3] + '.' + h[h.length-2] + '.' + h[h.length-1];
+        return h[h.length-2] + '.' + h[h.length-1];
+    },
+
+    // IMPORTANT: This function should be changed carefully.  It must be
+    // completely deterministic and consistent between releases.  Otherwise
+    // users would be forced to update their passwords.  In other words, the
+    // algorithm must always be backward-compatible.  It's only acceptable to
+    // violate backward compatibility when new options are used.
+    // SECURITY: The optional adjustments are positioned and calculated based
+    // on the sum of all character codes in the raw hash string.  So it becomes
+    // far more difficult to guess the injected special characters without
+    // knowing the master key.
+    // TODO: Is it ok to assume ASCII is ok for adjustments?
+    generateHashWord: function(
+                siteTag,
+                masterKey,
+                hashWordSize,
+                requireDigit,
+                requirePunctuation,
+                requireMixedCase,
+                restrictSpecial,
+                restrictDigits,
+                sha3)
+    {
+        // Start with the SHA1-encrypted master key/site tag.
+        var s;
+        if (sha3 || hashWordSize > 26)
+        {
+        	var hash = sha3_512.create();
+							hash.update(masterKey);
+							hash.update(siteTag);
+							hash.update(String(hashWordSize));
+					s = btoa(hash.hex());
+        }
+        else
+        {
+	        s = b64_hmac_sha1(masterKey, siteTag);
+	      }
+        // Use the checksum of all characters as a pseudo-randomizing seed to
+        // avoid making the injected characters easy to guess.  Note that it
+        // isn't random in the sense of not being deterministic (i.e.
+        // repeatable).  Must share the same seed between all injected
+        // characters so that they are guaranteed unique positions based on
+        // their offsets.
+        var sum = 0;
+        for (var i = 0; i < s.length; i++)
+            sum += s.charCodeAt(i);
+
+        // Restrict digits just does a mod 10 of all the characters
+        if (restrictDigits)
+        {
+            s = PassHashCommon.convertToDigits(s, sum, hashWordSize);
+        }
+        else
+        {
+            // Inject digit, punctuation, and mixed case as needed.
+            if (requireDigit)
+                s = PassHashCommon.injectSpecialCharacter(s, 0, 4, sum, hashWordSize, 48, 10);
+            if (requirePunctuation && !restrictSpecial)
+                s = PassHashCommon.injectSpecialCharacter(s, 1, 4, sum, hashWordSize, 33, 15);
+            if (requireMixedCase)
+            {
+                s = PassHashCommon.injectSpecialCharacter(s, 2, 4, sum, hashWordSize, 65, 26);
+                s = PassHashCommon.injectSpecialCharacter(s, 3, 4, sum, hashWordSize, 97, 26);
+            }
+            // Strip out special characters as needed.
+            if (restrictSpecial)
+                s = PassHashCommon.removeSpecialCharacters(s, sum, hashWordSize);
+        }
+       // Trim it to size.
+        return s.substr(0, hashWordSize);
+    },
+
+    // This is a very specialized method to inject a character chosen from a
+    // range of character codes into a block at the front of a string if one of
+    // those characters is not already present.
+    // Parameters:
+    //  sInput   = input string
+    //  offset   = offset for position of injected character
+    //  reserved = # of offsets reserved for special characters
+    //  seed     = seed for pseudo-randomizing the position and injected character
+    //  lenOut   = length of head of string that will eventually survive truncation.
+    //  cStart   = character code for first valid injected character.
+    //  cNum     = number of valid character codes starting from cStart.
+    injectSpecialCharacter: function(sInput, offset, reserved, seed, lenOut, cStart, cNum)
+    {
+        var pos0 = seed % lenOut;
+        var pos = (pos0 + offset) % lenOut;
+        // Check if a qualified character is already present
+        // Write the loop so that the reserved block is ignored.
+        for (var i = 0; i < lenOut - reserved; i++)
+        {
+            var i2 = (pos0 + reserved + i) % lenOut
+            var c = sInput.charCodeAt(i2);
+            if (c >= cStart && c < cStart + cNum)
+                return sInput;  // Already present - nothing to do
+        }
+        var sHead   = (pos > 0 ? sInput.substring(0, pos) : "");
+        var sInject = String.fromCharCode(((seed + sInput.charCodeAt(pos)) % cNum) + cStart);
+        var sTail   = (pos + 1 < sInput.length ? sInput.substring(pos+1, sInput.length) : "");
+        return (sHead + sInject + sTail);
+    },
+
+    // Another specialized method to replace a class of character, e.g.
+    // punctuation, with plain letters and numbers.
+    // Parameters:
+    //  sInput = input string
+    //  seed   = seed for pseudo-randomizing the position and injected character
+    //  lenOut = length of head of string that will eventually survive truncation.
+    removeSpecialCharacters: function(sInput, seed, lenOut)
+    {
+        var s = '';
+        var i = 0;
+        while (i < lenOut)
+        {
+            var j = sInput.substring(i).search(/[^a-z0-9]/i);
+            if (j < 0)
+                break;
+            if (j > 0)
+                s += sInput.substring(i, i + j);
+            s += String.fromCharCode((seed + i) % 26 + 65);
+            i += (j + 1);
+        }
+        if (i < sInput.length)
+            s += sInput.substring(i);
+        return s;
+    },
+
+    // Convert input string to digits-only.
+    // Parameters:
+    //  sInput = input string
+    //  seed   = seed for pseudo-randomizing the position and injected character
+    //  lenOut = length of head of string that will eventually survive truncation.
+    convertToDigits: function(sInput, seed, lenOut)
+    {
+        var s = '';
+        var i = 0;
+        while (i < lenOut)
+        {
+            var j = sInput.substring(i).search(/[^0-9]/i);
+            if (j < 0)
+                break;
+            if (j > 0)
+                s += sInput.substring(i, i + j);
+            s += String.fromCharCode((seed + sInput.charCodeAt(i)) % 10 + 48);
+            i += (j + 1);
+        }
+        if (i < sInput.length)
+            s += sInput.substring(i);
+        return s;
+    },
+
+    bumpSiteTag: function(siteTag)
+    {
+        var tag = siteTag.replace(/^[ \t]*(.*)[ \t]*$/, "$1");    // redundant
+        if (tag)
+        {
+            var splitTag = tag.match(/^(.*):([0-9]+)?$/);
+            if (splitTag == null || splitTag.length < 3)
+                tag += ":1";
+            else
+                tag = splitTag[1] + ":" + (parseInt(splitTag[2]) + 1);
+        }
+        return tag;
+    },
+
+    // Returns true if an HTML node is some kind of text field.
+    isTextNode: function(node)
+    {
+        try
+        {
+            var name = node.localName.toUpperCase();
+            if (name == "TEXTAREA" || name == "TEXTBOX" ||
+                        (name == "INPUT" &&
+                            (["text", "password", "search", "email", "url"].indexOf(node.type) != -1)))
+                return true;
+        }
+        catch(e) {}
+        return false;
+    },
+
+    // From Mozilla utilityOverlay.js
+    // TODO: Can I access it directly?
+    openUILinkIn: function(url, where)
+    {
+        if (!where)
+            return;
+
+        if ((url == null) || (url == ""))
+            return;
+
+        // xlate the URL if necessary
+        if (url.indexOf("urn:") == 0)
+            url = xlateURL(url);        // does RDF urn expansion
+
+        // avoid loading "", since this loads a directory listing
+        if (url == "")
+            url = "about:blank";
+
+        if (where == "save")
+        {
+            saveURL(url, null, null, true);
+            return;
+        }
+
+        var w = (where == "window") ? null : this.getTopWin();
+        if (!w)
+        {
+            openDialog(getBrowserURL(), "_blank", "chrome,all,dialog=no", url);
+            return;
+        }
+        var browser = w.document.getElementById("content");
+
+        switch (where)
+        {
+            case "current":
+                browser.loadURI(url);
+                w.content.focus();
+                break;
+            case "tabshifted":
+            case "tab":
+                var tab = browser.addTab(url);
+                if ((where == "tab") ^ this.getBoolPref("browser.tabs.loadBookmarksInBackground",
+                                                        false))
+                {
+                    browser.selectedTab = tab;
+                    w.content.focus();
+                }
+                break;
+        }
+    },
+
+    // From Mozilla utilityOverlay.js
+    getTopWin: function()
+    {
+        var windowManager = Components.classes['@mozilla.org/appshell/window-mediator;1'].
+                                getService();
+        var windowManagerInterface = windowManager.QueryInterface(
+                                        Components.interfaces.nsIWindowMediator);
+        var topWindowOfType = windowManagerInterface.getMostRecentWindow("navigator:browser");
+
+        if (topWindowOfType)
+            return topWindowOfType;
+
+        return null;
+    },
+
+    // From Mozilla utilityOverlay.js
+    getBoolPref: function(prefname, def)
+    {
+        try
+        {
+            var pref = Components.classes["@mozilla.org/preferences-service;1"]
+                           .getService(Components.interfaces.nsIPrefBranch);
+            return pref.getBoolPref(prefname);
+        }
+        catch(ex)
+        {
+            return def;
+        }
+    },
+
+    // Build an array sorted by domain name with properties populated, as
+    // available, for site tag, master key and options.
+    getSavedEntries: function()
+    {
+        // Because of Javascript limitations on associative arrays, e.g. not
+        // handling non-alphanumeric,  we'll go to the trouble of building
+        // separate sortable arrays of site tags, master keys and options using
+        // domain/value objects.  After sorting the three arrays we can walk
+        // through them and build the returned array of fully-fleshed-out
+        // objects.
+        var siteTags   = new Array();
+        var masterKeys = new Array();
+        var options    = new Array();
+        if (this.hasLoginManager())
+            this.getAllLoginManagerEntries(siteTags, masterKeys, options);
+        else
+            this.getAllPasswordManagerEntries(siteTags, masterKeys, options);
+
+        var entries = Array();
+        siteTags.sort(  function(a, b) {return a.name.localeCompare(b.name);});
+        masterKeys.sort(function(a, b) {return a.name.localeCompare(b.name);});
+        options.sort(   function(a, b) {return a.name.localeCompare(b.name);});
+        var iSiteTag = 0, iMasterKey = 0, iOption = 0;
+        while (iSiteTag   <   siteTags.length ||
+               iMasterKey < masterKeys.length ||
+               iOption    <    options.length)
+        {
+            // Find the lowest domain name from the three waiting values
+            var next = null;
+            if (iSiteTag < siteTags.length && (next == null ||
+                siteTags[iSiteTag].name < next))
+                next = siteTags[iSiteTag].name;
+            if (iMasterKey < masterKeys.length && (next == null ||
+                masterKeys[iMasterKey].name < next))
+                next = masterKeys[iMasterKey].name;
+            if (iOption < options.length && (next == null ||
+                options[iOption].name < next))
+                next = options[iOption].name;
+            // Grab all data with a matching domain name and advance the corresponding index
+            entries[entries.length] = {name: next};
+            if (iSiteTag < siteTags.length && next == siteTags[iSiteTag].name)
+            {
+                entries[entries.length-1].siteTag = siteTags[iSiteTag].value;
+                iSiteTag++;
+            }
+            else
+                entries[entries.length-1].siteTag = "";
+            if (iMasterKey < masterKeys.length && next == masterKeys[iMasterKey].name)
+            {
+                entries[entries.length-1].masterKey = masterKeys[iMasterKey].value;
+                iMasterKey++;
+            }
+            else
+                entries[entries.length-1].masterKey = "";
+            if (iOption < options.length && next == options[iOption].name)
+            {
+                entries[entries.length-1].options = options[iOption].value;
+                iOption++;
+            }
+            else
+                entries[entries.length-1].options = "";
+        }
+        return entries;
+    },
+
+    // Gather all extension-related FF3 login manager entries.  Return as 3
+    // arrays for site tags, master keys and options.
+    getAllLoginManagerEntries: function(siteTags, masterKeys, options)
+    {
+        var logins = this.findAllLoginManagerLogins();
+        for (var i = 0; i < logins.length; i++)
+        {
+            var login = logins[i];
+            try
+            {
+                if (login.hostname == this.host)
+                {
+                    if (login.username.indexOf("site-tag-") == 0)
+                    {
+                        var o = new Object();
+                        o.name = login.username.substring(9);
+                        o.value = login.password;
+                        siteTags[siteTags.length] = o;
+                    }
+                    else
+                    {
+                        if (login.username.indexOf("master-key-") == 0)
+                        {
+                            var o = new Object();
+                            o.name = login.username.substring(11);
+                            o.value = login.password;
+                            masterKeys[masterKeys.length] = o;
+                        }
+                        else
+                        {
+                            if (login.username.indexOf("options-") == 0)
+                            {
+                                var o = new Object();
+                                o.name = login.username.substring(8);
+                                o.value = login.password;
+                                options[options.length] = o;
+                            }
+                        }
+                    }
+                }
+            }
+            catch(e) {}
+        }
+    },
+
+    // Gather all extension-related FF2 login manager entries.  Return as 3
+    // arrays for site tags, master keys and options.
+    getAllPasswordManagerEntries: function(siteTags, masterKeys, options)
+    {
+        var passwordManager = Components.classes["@mozilla.org/passwordmanager;1"].
+                                    createInstance();
+        passwordManager.QueryInterface(Components.interfaces.nsIPasswordManager);
+        passwordManager.QueryInterface(Components.interfaces.nsIPasswordManagerInternal);
+        var passwordEnumerator = passwordManager.enumerator;
+        while(passwordEnumerator.hasMoreElements())
+        {
+            try
+            {
+                var pw = passwordEnumerator.getNext()
+                        .QueryInterface(Components.interfaces.nsIPasswordInternal);
+                if (pw.host == this.host)
+                {
+                    if (pw.user.indexOf("site-tag-") == 0)
+                    {
+                        var o = new Object();
+                        o.name = pw.user.substring(9);
+                        o.value = pw.password;
+                        siteTags[siteTags.length] = o;
+                    }
+                    else
+                    {
+                        if (pw.user.indexOf("master-key-") == 0)
+                        {
+                            var o = new Object();
+                            o.name = pw.user.substring(11);
+                            o.value = pw.password;
+                            masterKeys[masterKeys.length] = o;
+                        }
+                        else
+                        {
+                            if (pw.user.indexOf("options-") == 0)
+                            {
+                                var o = new Object();
+                                o.name = pw.user.substring(8);
+                                o.value = pw.password;
+                                options[options.length] = o;
+                            }
+                        }
+                    }
+                }
+            }
+            catch(e) {}
+        }
+    },
+
+    getResourceFile: function(uri)
+    {
+        var handler = Components.classes["@mozilla.org/network/protocol;1?name=file"]
+                            .createInstance(Components.interfaces.nsIFileProtocolHandler);
+        var urlSrc = Components.classes["@mozilla.org/network/standard-url;1"]
+                            .createInstance( Components.interfaces.nsIURL );
+        urlSrc.spec = uri;
+        var chromeReg = Components.classes["@mozilla.org/chrome/chrome-registry;1"]
+                            .getService( Components.interfaces.nsIChromeRegistry );
+        var urlIn = chromeReg.convertChromeURL(urlSrc);
+        return handler.getFileFromURLSpec(urlIn.spec);
+    },
+
+    openInputFile: function(fileIn)
+    {
+        var streamIn = Components.classes["@mozilla.org/network/file-input-stream;1"]
+                            .createInstance(Components.interfaces.nsIFileInputStream);
+        streamIn.init(fileIn, 0x01, 0444, 0);
+        streamIn.QueryInterface(Components.interfaces.nsILineInputStream);
+        return streamIn;
+    },
+
+    openOutputFile: function(fileOut)
+    {
+        var streamOut = Components.classes["@mozilla.org/network/file-output-stream;1"]
+                                 .createInstance(Components.interfaces.nsIFileOutputStream);
+        streamOut.init(fileOut, 0x02 | 0x08 | 0x20, 0664, 0); // write, create, truncate
+        return streamOut;
+    },
+
+    streamWriteLine: function(stream, line)
+    {
+        stream.write(line, line.length);
+        stream.write("\n", 1);
+    },
+
+    // Expand variables and return resulting string
+    expandLine: function(lineIn)
+    {
+        var strings = document.getElementById("pshOpt_strings");
+        var lineOut = "";
+        var splicePos = 0;
+        var re = /[$][{][ \t]*([^ }]+)[^}]*[}]/g;
+        var match;
+        while ((match = re.exec(lineIn)) != null)
+        {
+            lineOut += lineIn.substr(splicePos, match.index);
+            try
+            {
+                lineOut += strings.getString(match[1]);
+            }
+            catch (ex)
+            {
+                alert("Couldn't find string \"" + match[1] + "\"");
+                lineOut += "???" + match[1] + "???";
+            }
+            splicePos = re.lastIndex;
+        }
+        lineOut += lineIn.substr(splicePos);
+        return lineOut;
+    },
+
+    // Expand variables and write line to output stream
+    streamWriteExpandedLine: function(stream, line)
+    {
+        PassHashCommon.streamWriteLine(stream, PassHashCommon.expandLine(line));
+    },
+
+    browseFile: function(file, where)
+    {
+        var handler = Components.classes["@mozilla.org/network/protocol;1?name=file"]
+                            .createInstance(Components.interfaces.nsIFileProtocolHandler);
+        PassHashCommon.openUILinkIn(handler.getURLSpecFromFile(file), where);
+    },
+
+    pickHTMLFile: function(titleTag, defaultName)
+    {
+        var title = document.getElementById("pshOpt_strings").getString(titleTag);
+        var nsIFilePicker = Components.interfaces.nsIFilePicker;
+        var picker = Components.classes["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
+        if (defaultName)
+            picker.defaultString = defaultName;
+        picker.appendFilters(nsIFilePicker.filterHTML);
+        picker.init(window, title, nsIFilePicker.modeSave);
+        var file;
+        do
+        {
+            var action = picker.show();
+            if (action == 1)
+                return null;
+            file = picker.file;
+            if (! /\.html{0,1}$/.test(picker.file.path))
+                file.initWithPath(picker.file.path + ".html");
+            picker.defaultString = file.leafName;
+        }
+        while (file.exists() && (action == 0));
+        return file;
+    }
+
+    //NB: Make sure not to add a comma after the last function for older IE compatibility.
+};
+
+
+if (Components && Components.utils && Components.utils.import)
+	Components.utils.import("resource://passhash/passhash-module.jsm", PassHashCommon);
+</script>
 
 </head>
 
-<body>
-    <p>The Password Hasher online tool is now
-    <a href="http://wijjo.com/passhash/passhash.html">here</a>.
-    Please bookmark the new location.
-    Sorry for the inconvenience</p>
+<body onload="onLoad();">
+
+    <form name="form" onsubmit="return validate(this)" action="javascript:update()">
+        <table class="formtable">
+            <tbody>
+                <tr>
+                    <td class="title" colspan="2">Password Hasher v1.1.9</td>
+                </tr>
+                <tr>
+                    <td class="formlabel" colspan="2">Site Tag</td>
+                </tr>
+                <tr>
+                    <td>
+                        <input id="site-tag" class="formfield"
+                        onFocus="onEnterField(this, 'Site or other name, e.g. google');onUpdate();"
+                        onBlur="onLeaveField(this);"
+                        onclick="onUpdate()"
+                        oninput="onUpdate()"
+                        onchange="onUpdate()"
+                        />
+                    </td>
+                    <td style="width: 0">
+                        <input id="bump" type="button" value="Bump"
+                        class="button"
+                        onClick="onBump(this);"
+                        />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="formlabel" colspan="2">Master Key</td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <input id="master-key" type="password" class="password" phNoMarkers
+                        onFocus="onEnterField(this, 'Master key');onUpdate();"
+                        onBlur="onLeaveField(this);"
+                        onclick="onUpdate()"
+                        oninput="onUpdate()"
+                        onchange="onUpdate()"
+                        />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="formlabel" colspan="2">Hash Word</td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <textarea id="hash-word" readonly="true" class="formfield result"
+                        onFocus="onEnterField(this, '<b>Ctrl-C</b> to copy, <b>Enter</b> to start another');this.select();"
+                        onClick="this.select()"
+                        onBlur="onLeaveResultField(this);"
+                      	></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <input id="submit" type="button" value="Clear"
+                        class="button"
+                        onClick="onClear();"
+                        />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <label id="reveal-text" class="option">
+		                        <input id="reveal" type="checkbox" class="option"
+	  	                      onClick="onReveal(this);"
+	    	                    />
+                            Unmask
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <table class="optiontable">
+                            <tr>
+                                <td>
+                                    <div class="optionlabel">
+                                        Requirements
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label class="option">
+		                                    <input id="digit" type="checkbox" class="option"
+			                                    checked
+			                                    onClick="update();"
+		                                    />
+                                        Digit
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label class="option">
+	                                    	<input id="punctuation" type="checkbox" class="option"
+			                                    checked
+			                                    onClick="update();"
+		                                    />
+                                        Punctuation
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label class="option">
+		                                    <input id="mixedCase" type="checkbox" class="option"
+			                                    checked
+			                                    onClick="update();"
+		                                    />
+                                        Mixed Case
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label class="option" title="Automatically applied with size 27 and above">
+		                                    <input id="sha3" type="checkbox" class="option"
+			                                    onClick="onSha3Change();"
+		                                    />
+                                        SHA3-512 Algorithm
+                                    </label>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <table class="optiontable">
+                            <tr>
+                                <td>
+                                    <div class="optionlabel">
+                                        Restrictions
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label class="option">
+		                                    <input id="noSpecial" type="checkbox" class="option"
+		                                    onClick="onNoSpecial(this);"
+		                                    />
+                                        No Special
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label class="option">
+		                                    <input id="digitsOnly" type="checkbox" class="option"
+		                                    onClick="onDigitsOnly(this);"
+		                                    />
+                                        Digits Only
+                                    </label>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <table class="optiontable">
+                            <tr>
+                                <td>
+                                    <div class="optionlabel">
+                                        Size
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                            	<td>
+                            		<input id="hashWordSize"
+		                            				name="hashWordSize"
+		                            				type="number"
+		                            				value="26"
+		                            				min="1"
+		                            				max="100"
+		                                    class="option"
+		                                    onfocus="onUpdate(this)"
+		                                    onclick="onUpdate(this)"
+		                                    oninput="onUpdate(this)"
+		                                    onchange="onUpdate(this)"
+                                />
+                            	</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div id="prompt" class="prompt">
+        </div>
+        <div id="blurb" class="blurb">
+<!--!locale:portable-blurb.html-->
+<ul>
+    <li>Generates hash words when the
+    <a href="https://github.com/vanowm/PassHash">Password Hasher</a>
+    extension is unavailable.</li>
+    <li>Backs up and uses saved site options.</li>
+    <li>For security, does not know your master key(s).</li>
+    <li>Completely self-contained.</li>
+    <li>Runs in any browser.</li>
+    <li>Works from a USB key.</li>
+    <li>Layout works well in a sidebar.</li>
+    <li>Smart [Enter] key moves to next empty field, makes a hashword, or starts over.</li>
+    <li>Use copy/paste to apply the hash word to a password field.</li>
+</ul>
+        </div>
+    </form>
 </body>
+
+</html>

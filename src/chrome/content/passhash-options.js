@@ -43,6 +43,7 @@ var PassHashOptions =
     onLoad: function()
     {
         var opts = PassHashCommon.loadOptions();
+        this.opts = opts;
         document.getElementById("pshOpt_security").selectedItem =
                     this.getSecurityRadio(opts.securityLevel);
         document.getElementById("pshOpt_guessSiteTag"       ).checked = opts.guessSiteTag;
@@ -82,6 +83,7 @@ var PassHashOptions =
         opts.punctuationDefault  = document.getElementById("pshOpt_punctuationDefault").checked;
         opts.mixedCaseDefault    = document.getElementById("pshOpt_mixedCaseDefault"  ).checked;
         opts.hashWordSizeDefault = PassHashOptions.readHashWordSizeDefault();
+        opts.sha3Default         = document.getElementById("pshOpt_sha3Default"       ).checked;
         PassHashCommon.saveOptions(opts);
     },
 
@@ -119,6 +121,8 @@ var PassHashOptions =
                 // Found the control for the site tag list?
                 if (!fillSiteTagList && line.value.search(/<select.* id="site-tag-list"/i) >= 0)
                     fillSiteTagList = true;
+
+                line.value = line.value.replace(/<!--!version-->/, PassHashCommon.phCore.addon.version);
                 PassHashCommon.streamWriteExpandedLine(streamOut, line.value);
 
                 // Inject site tag option list after finding select element body.
@@ -242,5 +246,6 @@ var PassHashOptions =
     getHashWordSizeDefaultRadio: function(n)
     {
         return document.getElementById("pshOpt_hashWordSizeDefault" + n);
-    }
+    },
+
 }

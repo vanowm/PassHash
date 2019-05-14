@@ -33,7 +33,7 @@
 <!ENTITY pshDlg.digitsOnly.accesskey          "g">
 <!ENTITY pshDlg.accept.accesskey              "O">
 <!ENTITY pshDlg.cancel.accesskey              "C">
-<!ENTITY pshDlg.disclosure.accesskey          "I">
+<!ENTITY pshDlg.disclosure.accesskey          "f">
 <!ENTITY pshOpt.title                         "Password Hasher Options">
 <!ENTITY pshOpt.guessSiteTag.label            "Guess site tag">
 <!ENTITY pshOpt.rememberSiteTag.label         "Remember site tag">
@@ -77,7 +77,13 @@
 <!ENTITY pshOpt.hashWordSizeDefault.accesskey "z">
 <!ENTITY pshOpt.accept.accesskey              "O">
 <!ENTITY pshOpt.cancel.accesskey              "C">
-<!ENTITY pshOpt.disclosure.accesskey          "I">
+<!ENTITY pshOpt.disclosure.accesskey          "f">
 <!ENTITY pshOpt.showportable.accesskey        "r">
 <!ENTITY pshDlg.copy.label                 		"Clipboard">
 <!ENTITY pshDlg.copy.accesskey             		"c">
+<!ENTITY pshDlg.settings.label                "Settings">
+<!ENTITY pshDlg.settings.accesskey            "i">
+<!ENTITY pshDlg.sha3.label               		  "SHA3-512 alghoritm">
+<!ENTITY pshDlg.sha3.tooltip             		  "Automatically applied with size 27 and above">
+<!ENTITY pshDlg.sha3.accesskey            		"3">
+<!ENTITY pshOpt.sha3Default.accesskey      		"3">

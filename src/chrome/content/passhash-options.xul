@@ -7,19 +7,19 @@
 <dialog xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     id="pshOpt" 
     title="&pshOpt.title;" 
-    buttons="accept,cancel,disclosure,extra1"
+    buttons="accept,cancel,disclosure,help"
     onload="PassHashOptions.onLoad();"
     ondialogaccept="return PassHashOptions.onAccept();"
     ondialogdisclosure="PassHashOptions.onDisclosure();"
-    ondialogextra1="PassHashOptions.onShowPortable();"
+    ondialoghelp="PassHashOptions.onShowPortable();"
     buttonlabelaccept="&pshOpt.accept.label;"
     buttonlabelcancel="&pshOpt.cancel.label;"
     buttonlabeldisclosure="&pshOpt.disclosure.label;"
-    buttonlabelextra1="&pshOpt.showportable.label;"
+    buttonlabelhelp="&pshOpt.showportable.label;"
     buttonaccesskeyaccept="&pshOpt.accept.accesskey;"
     buttonaccesskeycancel="&pshOpt.cancel.accesskey;"
     buttonaccesskeydisclosure="&pshOpt.disclosure.accesskey;"
-    buttonaccesskeyextra1="&pshOpt.showportable.accesskey;"
+    buttonaccesskeyhelp="&pshOpt.showportable.accesskey;"
     >
 
     <script src="passhash-common.js"/>
@@ -157,6 +157,14 @@
                         accesskey="&pshOpt.mixedCaseDefault.accesskey;"
                         flex="1"
                         checked="true"/>
+
+                    <checkbox id="pshOpt_sha3Default"
+                        label="&pshDlg.sha3.label;"
+                        accesskey="&pshOpt.sha3Default.accesskey;"
+                        flex="1"
+                        class="info"
+												tooltiptext="&pshDlg.sha3.tooltip;"
+                        checked="false"/>
 
                 </groupbox>
 

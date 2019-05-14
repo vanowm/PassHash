@@ -52,7 +52,8 @@ var phCore = {
 				array[data[0]] = {
 					siteTag: data[0],
 					masterKey: data[1],
-					options: data[2]
+					options: data[2],
+					domain: domain
 				}
 			}
 			keys = Object.keys(array).sort();
@@ -135,6 +136,7 @@ AddonManager.getAddonByID("passhash@mozilla.wijjo.com", function(addon)
 {
 	phCore.addon = addon;
 	let prefs = phCore.prefs;
+
 	if (!prefs.prefHasUserValue("version"))
 	{
 //		let compare = Cc["@mozilla.org/xpcom/version-comparator;1"].getService(Ci.nsIVersionComparator).compare;

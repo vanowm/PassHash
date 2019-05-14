@@ -105,6 +105,8 @@ var PassHashCommon =
             if (elementKey != null)
                 opts.shortcutKeyMods = elementKey.getAttribute("modifiers");
         }
+        if (prefs.prefHasUserValue("optSha3Default"))
+            opts.sha3Default = prefs.getBoolPref("optSha3Default");
         // Force saving options if the key options are not present to give them visibility
         if (forceSave)
             this.saveOptions(opts);
@@ -126,10 +128,11 @@ var PassHashCommon =
         opts.digitDefault        = true;
         opts.punctuationDefault  = true;
         opts.mixedCaseDefault    = true;
-        opts.hashWordSizeDefault = 8;
+        opts.hashWordSizeDefault = 26;
         opts.firstTime           = true;
         opts.shortcutKeyCode     = "";
         opts.shortcutKeyMods     = "";
+        opts.sha3                = false;
         return opts;
     },
 
@@ -152,6 +155,7 @@ var PassHashCommon =
         prefs.setIntPref( "optHashWordSizeDefault", opts.hashWordSizeDefault);
         prefs.setCharPref("optShortcutKeyCode",     opts.shortcutKeyCode);
         prefs.setCharPref("optShortcutKeyMods",     opts.shortcutKeyMods);
+        prefs.setBoolPref("optSha3Default",         opts.sha3Default);
     },
 
     loadSecureValue: function(option, name, suffix, valueDefault)
@@ -303,16 +307,23 @@ var PassHashCommon =
                 requirePunctuation,
                 requireMixedCase,
                 restrictSpecial,
-                restrictDigits)
+                restrictDigits,
+                sha3)
     {
         // Start with the SHA1-encrypted master key/site tag.
-        var s = b64_hmac_sha1(masterKey, siteTag);
-        var s2 = s;
-        for(let i = 0; i < 2; i++)
+        var s;
+        if (sha3 || hashWordSize > 26)
         {
-        	s2 += b64_hmac_sha1(s, s2);
+        	var hash = sha3_512.create();
+							hash.update(masterKey);
+							hash.update(siteTag);
+							hash.update(String(hashWordSize));
+					s = btoa(hash.hex());
         }
-        let s3 = s + s2;
+        else
+        {
+	        s = b64_hmac_sha1(masterKey, siteTag);
+	      }
         // Use the checksum of all characters as a pseudo-randomizing seed to
         // avoid making the injected characters easy to guess.  Note that it
         // isn't random in the sense of not being deterministic (i.e.
@@ -322,10 +333,11 @@ var PassHashCommon =
         var sum = 0;
         for (var i = 0; i < s.length; i++)
             sum += s.charCodeAt(i);
+
         // Restrict digits just does a mod 10 of all the characters
         if (restrictDigits)
         {
-            s = PassHashCommon.convertToDigits(s3, sum, hashWordSize);
+            s = PassHashCommon.convertToDigits(s, sum, hashWordSize);
         }
         else
         {
@@ -339,7 +351,6 @@ var PassHashCommon =
                 s = PassHashCommon.injectSpecialCharacter(s, 2, 4, sum, hashWordSize, 65, 26);
                 s = PassHashCommon.injectSpecialCharacter(s, 3, 4, sum, hashWordSize, 97, 26);
             }
-            s += s2;
             // Strip out special characters as needed.
             if (restrictSpecial)
                 s = PassHashCommon.removeSpecialCharacters(s, sum, hashWordSize);
@@ -449,7 +460,7 @@ var PassHashCommon =
             var name = node.localName.toUpperCase();
             if (name == "TEXTAREA" || name == "TEXTBOX" ||
                         (name == "INPUT" &&
-                            (node.type == "text" || node.type == "password")))
+                            (["text", "password", "search", "email", "url"].indexOf(node.type) != -1)))
                 return true;
         }
         catch(e) {}
@@ -798,6 +809,7 @@ var PassHashCommon =
 
     //NB: Make sure not to add a comma after the last function for older IE compatibility.
 };
+
 
 if (Components && Components.utils && Components.utils.import)
 	Components.utils.import("resource://passhash/passhash-module.jsm", PassHashCommon);

@@ -81,3 +81,9 @@
 <!ENTITY pshOpt.showportable.accesskey        "w">
 <!ENTITY pshDlg.copy.label                 		"Clipboard">
 <!ENTITY pshDlg.copy.accesskey             		"c">
+<!ENTITY pshDlg.settings.label                "Settings">
+<!ENTITY pshDlg.settings.accesskey            "i">
+<!ENTITY pshDlg.sha3.label               		  "SHA3-512 alghoritm">
+<!ENTITY pshDlg.sha3.tooltip             		  "Automatically applied with size 27 and above">
+<!ENTITY pshDlg.sha3.accesskey            		"3">
+<!ENTITY pshOpt.sha3Default.accesskey      		"3">

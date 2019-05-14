@@ -9,6 +9,7 @@ else if (navigator.appName.indexOf("Microsoft") != -1)
 
 var siteTagLast = '';
 var masterKeyLast = '';
+var isSha3 = false;
 
 function onLoad()
 {
@@ -38,39 +39,40 @@ function validate(form)
     return true;
 }
 
-function update() 
+function onClear()
+{
+  document.getElementById('site-tag').value = "";
+  document.getElementById('master-key').value = "";
+  update();
+}
+function update(nofocus) 
 {
     var siteTag   = document.getElementById('site-tag');
     var masterKey = document.getElementById('master-key');
     var hashWord  = document.getElementById('hash-word');
-    var submit    = document.getElementById('submit');
-    if (submit.value == 'Another')
-    {
-        siteTag.focus();
-        submit.value = 'OK';
-        hashWord.value = '';
-    }
-    else
-    {
-        //var hashapass = b64_hmac_sha1(masterKey.value, siteTag.value).substr(0,8);
-        var hashWordSize       = document.getElementById("hashWordSize").value;
-        var requireDigit       = document.getElementById("digit").checked;
-        var requirePunctuation = document.getElementById("punctuation").checked;
-        var requireMixedCase   = document.getElementById("mixedCase").checked;
-        var restrictSpecial    = document.getElementById("noSpecial").checked;
-        var restrictDigits     = document.getElementById("digitsOnly").checked;
-        hashWord.value = PassHashCommon.generateHashWord(
-                siteTag.value,
-                masterKey.value,
-                hashWordSize,
-                requireDigit,
-                requirePunctuation,
-                requireMixedCase,
-                restrictSpecial,
-                restrictDigits);
-        hashWord.focus();
-        submit.value = 'Another';
-    }
+    //var hashapass = b64_hmac_sha1(masterKey.value, siteTag.value).substr(0,8);
+    var hashWordSize       = document.getElementById("hashWordSize").value;
+    var requireDigit       = document.getElementById("digit").checked;
+    var requirePunctuation = document.getElementById("punctuation").checked;
+    var requireMixedCase   = document.getElementById("mixedCase").checked;
+    var restrictSpecial    = document.getElementById("noSpecial").checked;
+    var restrictDigits     = document.getElementById("digitsOnly").checked;
+    if (!siteTag.value || !masterKey.value)
+    	return;
+
+    hashWord.value = PassHashCommon.generateHashWord(
+            siteTag.value,
+            masterKey.value,
+            hashWordSize,
+            requireDigit,
+            requirePunctuation,
+            requireMixedCase,
+            restrictSpecial,
+            restrictDigits,
+            isSha3);
+    if (!nofocus)
+      hashWord.focus();
+
     siteTagLast = siteTag.value;
     masterKeyLast = masterKey.value;
 }
@@ -97,16 +99,14 @@ function checkChange()
         hashWord.value = '';
         siteTagLast = siteTag.value;
         masterKeyLast = masterKey.value;
+        onUpdate();
     }
     setTimeout('checkChange()', 1000);
 }
 
-function onEnterSubmitButton(fld)
+function onLeaveResultField(hashWord)
 {
-    if (fld.value == 'Another')
-        onEnterField(fld, 'Start another hashword');
-    else
-        onEnterField(fld, 'Generate hashword');
+    document.getElementById('prompt').innerHTML = '';
 }
 
 function onLeaveField(fld)
@@ -116,14 +116,6 @@ function onLeaveField(fld)
     fld.value = '';
     fld.value = v;
     // Remove the prompt
-    document.getElementById('prompt').innerHTML = '';
-}
-
-function onLeaveResultField(hashWord)
-{
-    var submit = document.getElementById('submit');
-    submit.value = 'OK';
-//    hashWord.value = '';
     document.getElementById('prompt').innerHTML = '';
 }
 
@@ -178,11 +170,14 @@ function onSelectSiteTag(fld)
     document.getElementById("punctuation").disabled = (options.search(/g/i) >= 0);
     document.getElementById("mixedCase"  ).disabled = (options.search(/g/i) >= 0);
     document.getElementById("noSpecial"  ).disabled = (options.search(/g/i) >= 0);
+    document.getElementById("sha3"       ).checked  = (options.search(/s/i) >= 0);
+    isSha3 = document.getElementById("sha3").checked;
     var sizeMatch = options.match(/[0-9]+/);
     var hashWordSize = (sizeMatch != null && sizeMatch.length > 0
                                 ? parseInt(sizeMatch[0])
                                 : 26);
 		document.getElementById("hashWordSize").value = hashWordSize;
+		onUpdate();
     if (validate())
         update();
 }
@@ -191,4 +186,53 @@ function onLeaveSelectSiteTag(fld)
 {
     // Remove the prompt
     document.getElementById('prompt').innerHTML = '';
+}
+
+function filter(obj)
+{
+	let s = obj.selectionStart,
+			e = obj.selectionEnd,
+			val = Math.min(~~obj.getAttribute("max"), Math.max(~~obj.getAttribute("min"), ~~obj.value.replace(/[^0-9]/g, "")));
+	obj.value = val;
+
+	if (e !== null)
+		obj.selectionEnd = e;
+	if (s !== null)
+		obj.selectionStart = s;
+}
+
+function onSha3Change()
+{
+	isSha3 = document.getElementById("sha3").checked;
+	update();
+}
+
+function onUpdate(obj)
+{
+	let isSize = true;
+	if (!obj)
+	{
+		isSize = false;
+	}
+	obj = document.getElementById("hashWordSize");
+	if (isSize)
+	{
+		filter(obj);
+	}
+	if (obj.value > 26)
+	{
+		document.getElementById("sha3").checked = true;
+		document.getElementById("sha3").disabled = true;
+	}
+	else
+	{
+		document.getElementById("sha3").checked = isSha3;
+		document.getElementById("sha3").disabled = false;
+	}
+	update(true);
+
+	if (!isSize || obj.value == this.hashWordSizePrev)
+		return;
+
+	this.hashWordSizePrev = obj.value;
 }

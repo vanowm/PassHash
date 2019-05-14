@@ -53,9 +53,12 @@ var PassHash =
 		restrictSpecial:     null,
 		restrictDigits:      null,
 		hashWordSize:        null,
+		sha3:                null,
+		title: document.title,
 
 		onLoad: function()
 		{
+				document.title = this.title + " v" + PassHashCommon.phCore.addon.version;
 				var ctlSiteTag            = document.getElementById("site-tag");
 				var ctlMasterKey          = document.getElementById("master-key");
 				var ctlRequireDigit       = document.getElementById("digit");
@@ -64,6 +67,7 @@ var PassHash =
 				var ctlRestrictSpecial    = document.getElementById("noSpecial");
 				var ctlRestrictDigits     = document.getElementById("digitsOnly");
 				var ctlHashWordSize       = document.getElementById("hashWordSize");
+				var ctlSha3               = document.getElementById("sha3");
 
 				var prefs = PassHashCommon.loadOptions();
 				this.guessSiteTag       = prefs.guessSiteTag;
@@ -78,6 +82,7 @@ var PassHash =
 				this.restrictSpecial    = false;
 				this.restrictDigits     = false;
 				this.hashWordSize       = prefs.hashWordSizeDefault;
+				this.sha3               = prefs.sha3Default;
 
 				this.onUnmask();
 
@@ -121,6 +126,7 @@ var PassHash =
 				ctlRequireMixedCase.checked    = this.requireMixedCase;
 				ctlRestrictSpecial.checked     = this.restrictSpecial;
 				ctlRestrictDigits.checked      = this.restrictDigits;
+				ctlSha3.checked                = this.sha3;
 				this.updateCheckboxes();
 
 				var btn = document.getElementById("hashWordSize"+this.hashWordSize);
@@ -151,7 +157,8 @@ var PassHash =
 */
 if (!ctlMasterKey.value)
 {
-	ctlMasterKey.value = " " + ctlSiteTag.value;
+	if (ctlSiteTag.value)
+		ctlMasterKey.value = " " + ctlSiteTag.value;
 	ctlMasterKey.setSelectionRange(0,0);
 }
 else
@@ -160,7 +167,8 @@ else
 }
 ctlMasterKey.focus();
 //V@no
-				this.updateHashWord();
+let r = this.updateHashWord();
+
 this.hashWordCur = document.getElementById("hash-word" ).value; //V@no new
 		},
 
@@ -189,11 +197,25 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 */
 }
 						window.arguments[0].output = document.getElementById("hash-word" ).value;
+						window.arguments[0].callback(document.getElementById("hash-word" ).value);
 						return true;
 				}
 				return false;
 		},
 
+		onCancel: function()
+		{
+			window.arguments[0].callback(null);
+			return true;
+		},
+
+		onSettings: function()
+		{
+//			chrome://passhash/content/passhash-options.xul
+        window.openDialog("chrome://passhash/content/passhash-options.xul", "dlgopt",
+                          "modal,centerscreen", {});
+		},
+		
 		onOptions: function()
 		{
 				this.optionsHidden = !this.optionsHidden;
@@ -268,10 +290,22 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 				var ctlSiteTag   = document.getElementById("site-tag"  );
 				var ctlMasterKey = document.getElementById("master-key");
 				var ctlHashWord  = document.getElementById("hash-word" );
+				var r = 0;
 				if (!ctlSiteTag.value)
-						return 1;
-				if (!ctlMasterKey.value)
-						return 2;
+						r = 1;
+				else if (!ctlMasterKey.value)
+						r = 2;
+
+
+				ctlMasterKey.classList.toggle("error", (!ctlMasterKey.value));
+				ctlSiteTag.classList.toggle("error", (!ctlSiteTag.value));
+				document.getElementById("site-tag-bump").disabled = (!ctlSiteTag.value);
+				document.getElementById("copy").disabled = r;
+				if (r)
+				{
+					ctlHashWord.value = "";
+					return r;
+				}
 				// Change the hash word and determine whether or not it was modified.
 				var hashWordOrig = ctlHashWord.value;
 				ctlHashWord.value = PassHashCommon.generateHashWord(
@@ -282,7 +316,8 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 								this.requirePunctuation,
 								this.requireMixedCase,
 								this.restrictSpecial,
-								this.restrictDigits);
+								this.restrictDigits,
+								this.sha3);
 				if (ctlHashWord.value != hashWordOrig)
 						return 3;   // It was modified
 				return 0;       // It was not modified
@@ -341,6 +376,16 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 								this.restrictDigits;
 				document.getElementById("digitsOnly").disabled =
 								false;  // Can always add digits-only as a further restriction
+				if (this.hashWordSize > 26)
+				{
+					document.getElementById("sha3").disabled = true;
+					document.getElementById("sha3").checked = true;
+				}
+				else
+				{
+					document.getElementById("sha3").disabled = false;
+					document.getElementById("sha3").checked = this.sha3;
+				}
 		},
 
 		// Determines where to focus and generates the hash word when adequate
@@ -349,6 +394,7 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 		{
 				this.updateCheckboxes();
 				let r = this.updateHashWord();
+
 				if (focus === false)
 					return true;
 
@@ -375,6 +421,7 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 				this.requireMixedCase   = (s.search(/m/i) >= 0);
 				this.restrictSpecial    = (s.search(/r/i) >= 0);
 				this.restrictDigits     = (s.search(/g/i) >= 0);
+				this.sha3               = (s.search(/s/i) >= 0);
 				var sizeMatch = s.match(/[0-9]+/);
 				this.hashWordSize = (sizeMatch != null && sizeMatch.length > 0
 																		? parseInt(sizeMatch[0])
@@ -394,18 +441,37 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 						opts += 'r';
 				if (this.restrictDigits)
 						opts += 'g';
+				if (this.sha3)
+						opts += 's';
 				opts += this.hashWordSize.toString();
 				return opts;
 		},
 
+		onSha3Changed: function()
+		{
+				this.sha3 = document.getElementById("sha3").checked;
+				this.update();
+		},
+
 		onCopy: function()
 		{
-			let text = document.getElementById("hash-word" ).value;
-			if (text.replace(/(^\s+|\s+$)/g, "") === "")
+			let node = document.getElementById("hash-word" ),
+					text = node.value,
+					that = this;
+
+			if (that.timer || text.replace(/(^\s+|\s+$)/g, "") === "")
 				return;
+
 			Components.classes["@mozilla.org/widget/clipboardhelper;1"]
 				.getService(Components.interfaces.nsIClipboardHelper)
 				.copyString(text);
+
+			node.classList.toggle("flash", true);
+			that.timer = setTimeout(function()
+			{
+				node.classList.toggle("flash", false);
+				delete that.timer;
+			}, 1000);
 		}
 
 }

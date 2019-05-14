@@ -3,7 +3,7 @@
 
 <head>
 
-<title>${passhashPortableTitle}</title>
+<title>${passhashPortableTitle} v<!--!version--></title>
 <meta http-equiv="content-type" content="text-html; charset=utf-8">
 
 <style>
@@ -19,6 +19,10 @@
 </script>
 
 <script language="JavaScript" type="text/javascript">
+<!--!content:passhash-sha3.js-->
+</script>
+
+<script language="JavaScript" type="text/javascript">
 <!--!content:passhash-common.js-->
 </script>
 
@@ -30,7 +34,7 @@
         <table class="formtable">
             <tbody>
                 <tr>
-                    <td class="title" colspan="2">${passhashPortableTitle}</td>
+                    <td class="title" colspan="2">${passhashPortableTitle} v<!--!version--></td>
                 </tr>
                 <tr>
                     <td class="formlabel" colspan="2">${passhashPortableSiteTagLabel}</td>
@@ -46,10 +50,19 @@
                     </td>
                 </tr>
                 <tr>
-                    <td colspan="2">
+                    <td>
                         <input id="site-tag" class="formfield"
-                        onFocus="onEnterField(this, '${passhashPortableSiteTagPrompt}');"
+                        onFocus="onEnterField(this, '${passhashPortableSiteTagPrompt}');onUpdate();"
                         onBlur="onLeaveField(this);"
+                        onclick="onUpdate()"
+                        oninput="onUpdate()"
+                        onchange="onUpdate()"
+                        />
+                    </td>
+                    <td style="width: 0">
+                        <input id="bump" type="button" value="${passhashPortableBumpLabel}"
+                        class="button"
+                        onClick="onBump(this);"
                         />
                     </td>
                 </tr>
@@ -59,8 +72,11 @@
                 <tr>
                     <td colspan="2">
                         <input id="master-key" type="password" class="password" phNoMarkers
-                        onFocus="onEnterField(this, '${passhashPortableMasterKeyPrompt}');"
+                        onFocus="onEnterField(this, '${passhashPortableMasterKeyPrompt}');onUpdate();"
                         onBlur="onLeaveField(this);"
+                        onclick="onUpdate()"
+                        oninput="onUpdate()"
+                        onchange="onUpdate()"
                         />
                     </td>
                 </tr>
@@ -69,35 +85,29 @@
                 </tr>
                 <tr>
                     <td colspan="2">
-                        <input id="hash-word" readonly="true" class="formfield result"
-                        onFocus="onEnterField(this, '${passhashPortableHashWordPrompt}');"
+                        <textarea id="hash-word" readonly="true" class="formfield result"
+                        onFocus="onEnterField(this, '${passhashPortableHashWordPrompt}');this.select();"
+                        onClick="this.select()"
                         onBlur="onLeaveResultField(this);"
-                        />
+                      	></textarea>
                     </td>
                 </tr>
                 <tr>
-                    <td>
-                        <input id="submit" type="submit" value="${passhashPortableAcceptLabel}"
+                    <td colspan="2">
+                        <input id="submit" type="button" value="${passhashPortableAcceptLabel}"
                         class="button"
-                        onFocus="onEnterSubmitButton(this);"
-                        onBlur="onLeaveField(this);"
-                        />
-                    </td>
-                    <td>
-                        <input id="bump" type="button" value="${passhashPortableBumpLabel}"
-                        class="button"
-                        onClick="onBump(this);"
+                        onClick="onClear();"
                         />
                     </td>
                 </tr>
                 <tr>
                     <td colspan="2">
-                        <input id="reveal" type="checkbox" class="option"
-                        onClick="onReveal(this);"
-                        />
-                        <span id="reveal-text" class="option">
+                        <label id="reveal-text" class="option">
+		                        <input id="reveal" type="checkbox" class="option"
+	  	                      onClick="onReveal(this);"
+	    	                    />
                             ${passhashPortableUnmaskLabel}
-                        </span>
+                        </label>
                     </td>
                 </tr>
                 <tr>
@@ -112,35 +122,45 @@
                             </tr>
                             <tr>
                                 <td>
-                                    <input id="digit" type="checkbox" class="option"
-                                    checked
-                                    onClick="update();"
-                                    />
-                                    <span class="option">
+                                    <label class="option">
+		                                    <input id="digit" type="checkbox" class="option"
+			                                    checked
+			                                    onClick="update();"
+		                                    />
                                         ${passhashPortableDigitLabel}
-                                    </span>
+                                    </label>
                                 </td>
                             </tr>
                             <tr>
                                 <td>
-                                    <input id="punctuation" type="checkbox" class="option"
-                                    checked
-                                    onClick="update();"
-                                    />
-                                    <span class="option">
+                                    <label class="option">
+	                                    	<input id="punctuation" type="checkbox" class="option"
+			                                    checked
+			                                    onClick="update();"
+		                                    />
                                         ${passhashPortablePunctuationLabel}
-                                    </span>
+                                    </label>
                                 </td>
                             </tr>
                             <tr>
                                 <td>
-                                    <input id="mixedCase" type="checkbox" class="option"
-                                    checked
-                                    onClick="update();"
-                                    />
-                                    <span class="option">
+                                    <label class="option">
+		                                    <input id="mixedCase" type="checkbox" class="option"
+			                                    checked
+			                                    onClick="update();"
+		                                    />
                                         ${passhashPortableMixedCaseLabel}
-                                    </span>
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <label class="option" title="${passhashPortableSha3Tooltip}">
+		                                    <input id="sha3" type="checkbox" class="option"
+			                                    onClick="onSha3Change();"
+		                                    />
+                                        ${passhashPortableSha3Label}
+                                    </label>
                                 </td>
                             </tr>
                         </table>
@@ -158,22 +178,22 @@
                             </tr>
                             <tr>
                                 <td>
-                                    <input id="noSpecial" type="checkbox" class="option"
-                                    onClick="onNoSpecial(this);"
-                                    />
-                                    <span class="option">
+                                    <label class="option">
+		                                    <input id="noSpecial" type="checkbox" class="option"
+		                                    onClick="onNoSpecial(this);"
+		                                    />
                                         ${passhashPortableNoSpecialLabel}
-                                    </span>
+                                    </label>
                                 </td>
                             </tr>
                             <tr>
                                 <td>
-                                    <input id="digitsOnly" type="checkbox" class="option"
-                                    onClick="onDigitsOnly(this);"
-                                    />
-                                    <span class="option">
+                                    <label class="option">
+		                                    <input id="digitsOnly" type="checkbox" class="option"
+		                                    onClick="onDigitsOnly(this);"
+		                                    />
                                         ${passhashPortableDigitsOnlyLabel}
-                                    </span>
+                                    </label>
                                 </td>
                             </tr>
                         </table>
@@ -191,10 +211,18 @@
                             </tr>
                             <tr>
                             	<td>
-                            		<input id="hashWordSize" name="hashWordSize" type="number" value="26"
-                                    class="option"
-                                    onClick="update(this);"
-                                    />
+                            		<input id="hashWordSize"
+		                            				name="hashWordSize"
+		                            				type="number"
+		                            				value="26"
+		                            				min="1"
+		                            				max="100"
+		                                    class="option"
+		                                    onfocus="onUpdate(this)"
+		                                    onclick="onUpdate(this)"
+		                                    oninput="onUpdate(this)"
+		                                    onchange="onUpdate(this)"
+                                />
                             	</td>
                             </tr>
                         </table>

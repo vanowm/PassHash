@@ -138,11 +138,12 @@
                         <textbox
                             id="hash-word"
                             class="formfield"
-                            type="password"
                             readonly="true"
 														multiline="true"
-														onclick="this.select()"
-														onfocus="this.select()"
+														onfocus="PassHash.selectHashWord(event);"
+														onclick="PassHash.selectHashWord(event);"
+														onpopupshowing="PassHash.selectHashWord(event);"
+														oncopy="return PassHash.selectHashWord(event);"
                             />
 												<vbox>
                         <button
@@ -173,6 +174,7 @@
 
         <hbox
             id="options-box"
+            persist="hidden"
             >
 
             <vbox flex="1">
@@ -188,7 +190,7 @@
                     <vbox>
 
                         <checkbox
-                            id="digit"
+                            id="requireDigit"
                             label="&pshDlg.digit.label;"
                             accesskey="&pshDlg.digit.accesskey;"
                             flex="1"
@@ -197,7 +199,7 @@
                             />
 
                         <checkbox
-                            id="punctuation"
+                            id="requirePunctuation"
                             label="&pshDlg.punctuation.label;"
                             accesskey="&pshDlg.punctuation.accesskey;"
                             flex="1"
@@ -206,7 +208,7 @@
                             />
 
                         <checkbox
-                            id="mixedCase"
+                            id="requireMixedCase"
                             label="&pshDlg.mixedCase.label;"
                             accesskey="&pshDlg.mixedCase.accesskey;"
                             flex="1"
@@ -240,7 +242,7 @@
 		                    label="&pshDlg.hashWordSize.label;"
 												accesskey="&pshOpt.hashWordSizeDefault.accesskey;"
 		                    />
-
+										<hbox>
 											<textbox
 												id="hashWordSize"
 												type="number"
@@ -251,7 +253,7 @@
 												oncommand="PassHash.onHashWordSizeChanged(event);"
 												accesskey="&pshOpt.hashWordSizeDefault.accesskey;"
 											/>
-
+									</hbox>
 		            </groupbox>
             <groupbox
                 id="restrictionsGroup"
@@ -298,6 +300,7 @@
             minwidth="480"
             minheight="360"
             flex="1"
+            persist="hidden"
             />
 
     </vbox>

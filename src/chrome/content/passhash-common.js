@@ -33,6 +33,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
+var log = console.log.bind(console);
 var PassHashCommon =
 {
     // Artificial host name used for for saving to the password database
@@ -45,44 +46,17 @@ var PassHashCommon =
         consoleService.logStringMessage(msg);
     },
 
+		phCore: {},
+
     loadOptions: function()
     {
-        var opts = this.createOptions();
-        var prefs = Components.classes["@mozilla.org/preferences-service;1"].
-                        getService(Components.interfaces.nsIPrefService).getBranch("passhash.");
+        let opts = this.phCore.opts,
+        		type = {
+							boolean: "Bool",
+							number: "Int"
+        		},
+        		prefs = this.phCore._prefs;
         var forceSave = false;
-        if (prefs.prefHasUserValue("optSecurityLevel"))
-        {
-            opts.securityLevel = prefs.getIntPref("optSecurityLevel");
-            opts.firstTime = false;
-            forceSave = true;
-        }
-        if (prefs.prefHasUserValue("optGuessSiteTag"))
-            opts.guessSiteTag = prefs.getBoolPref("optGuessSiteTag");
-        if (prefs.prefHasUserValue("optRememberSiteTag"))
-            opts.rememberSiteTag = prefs.getBoolPref("optRememberSiteTag");
-        if (prefs.prefHasUserValue("optRememberMasterKey"))
-            opts.rememberMasterKey = prefs.getBoolPref("optRememberMasterKey");
-        if (prefs.prefHasUserValue("optRevealSiteTag"))
-            opts.revealSiteTag = prefs.getBoolPref("optRevealSiteTag");
-        if (prefs.prefHasUserValue("optRevealHashWord"))
-            opts.revealHashWord = prefs.getBoolPref("optRevealHashWord");
-        if (prefs.prefHasUserValue("optShowMarker"))
-            opts.showMarker = prefs.getBoolPref("optShowMarker");
-        if (prefs.prefHasUserValue("optUnmaskMarker"))
-            opts.unmaskMarker = prefs.getBoolPref("optUnmaskMarker");
-        if (prefs.prefHasUserValue("optGuessFullDomain"))
-            opts.guessFullDomain = prefs.getBoolPref("optGuessFullDomain");
-        if (prefs.prefHasUserValue("optDigitDefault"))
-            opts.digitDefault = prefs.getBoolPref("optDigitDefault");
-        if (prefs.prefHasUserValue("optPunctuationDefault"))
-            opts.punctuationDefault = prefs.getBoolPref("optPunctuationDefault");
-        if (prefs.prefHasUserValue("optMixedCaseDefault"))
-            opts.mixedCaseDefault = prefs.getBoolPref("optMixedCaseDefault");
-        if (prefs.prefHasUserValue("optHashWordSizeDefault"))
-            opts.hashWordSizeDefault = prefs.getIntPref("optHashWordSizeDefault");
-        if (prefs.prefHasUserValue("optShortcutKeyCode"))
-            opts.shortcutKeyCode = prefs.getCharPref("optShortcutKeyCode");
         if (!opts.shortcutKeyCode)
         {
             // Set shortcut key to XUL-defined default.
@@ -95,8 +69,6 @@ var PassHashCommon =
                     opts.shortcutKeyCode = elementKey.getAttribute("keycode");
             }
         }
-        if (prefs.prefHasUserValue("optShortcutKeyMods"))
-            opts.shortcutKeyMods = prefs.getCharPref("optShortcutKeyMods");
         if (!opts.shortcutKeyMods)
         {
             // Set shortcut modifiers to XUL-defined default.
@@ -105,184 +77,27 @@ var PassHashCommon =
             if (elementKey != null)
                 opts.shortcutKeyMods = elementKey.getAttribute("modifiers");
         }
-        if (prefs.prefHasUserValue("optSha3Default"))
-            opts.sha3Default = prefs.getBoolPref("optSha3Default");
         // Force saving options if the key options are not present to give them visibility
         if (forceSave)
-            this.saveOptions(opts);
+            this.phCore.saveOptions(opts);
+
         return opts;
     },
 
-    createOptions: function()
-    {
-        var opts = new Object();
-        opts.securityLevel       = 2;
-        opts.guessSiteTag        = true;
-        opts.rememberSiteTag     = true;
-        opts.rememberMasterKey   = false;
-        opts.revealSiteTag       = true;
-        opts.revealHashWord      = false;
-        opts.showMarker          = true;
-        opts.unmaskMarker        = false;
-        opts.guessFullDomain     = false;
-        opts.digitDefault        = true;
-        opts.punctuationDefault  = true;
-        opts.mixedCaseDefault    = true;
-        opts.hashWordSizeDefault = 26;
-        opts.firstTime           = true;
-        opts.shortcutKeyCode     = "";
-        opts.shortcutKeyMods     = "";
-        opts.sha3                = false;
-        return opts;
-    },
-
-    saveOptions: function(opts)
-    {
-        var prefs = Components.classes["@mozilla.org/preferences-service;1"].
-                        getService(Components.interfaces.nsIPrefService).getBranch("passhash.");
-        prefs.setIntPref( "optSecurityLevel",       opts.securityLevel);
-        prefs.setBoolPref("optGuessSiteTag",        opts.guessSiteTag);
-        prefs.setBoolPref("optRememberSiteTag",     opts.rememberSiteTag);
-        prefs.setBoolPref("optRememberMasterKey",   opts.rememberMasterKey);
-        prefs.setBoolPref("optRevealSiteTag",       opts.revealSiteTag);
-        prefs.setBoolPref("optRevealHashWord",      opts.revealHashWord);
-        prefs.setBoolPref("optShowMarker",          opts.showMarker);
-        prefs.setBoolPref("optUnmaskMarker",        opts.unmaskMarker);
-        prefs.setBoolPref("optGuessFullDomain",     opts.guessFullDomain);
-        prefs.setBoolPref("optDigitDefault",        opts.digitDefault);
-        prefs.setBoolPref("optPunctuationDefault",  opts.punctuationDefault);
-        prefs.setBoolPref("optMixedCaseDefault",    opts.mixedCaseDefault);
-        prefs.setIntPref( "optHashWordSizeDefault", opts.hashWordSizeDefault);
-        prefs.setCharPref("optShortcutKeyCode",     opts.shortcutKeyCode);
-        prefs.setCharPref("optShortcutKeyMods",     opts.shortcutKeyMods);
-        prefs.setBoolPref("optSha3Default",         opts.sha3Default);
-    },
-
-    loadSecureValue: function(option, name, suffix, valueDefault)
-    {
-        return (this.hasLoginManager()
-                    ? this.loadLoginManagerValue(option, name, suffix, valueDefault)
-                    : this.loadPasswordManagerValue(option, name, suffix, valueDefault));
-    },
-
-   loadLoginManagerValue: function(option, name, suffix, valueDefault)
-    {
-        var user = (suffix ? name + "-" + suffix : name);
-        var value = valueDefault;
-        if (option && suffix != null)
-        {
-            var login = this.findLoginManagerUserLogin(user);
-            if (login != null && login.password != "" && login.password != "n/a")
-                value = login.password;
-        }
-        return value;
-    },
-
-    loadPasswordManagerValue: function(option, name, suffix, valueDefault)
-    {
-        var user = (suffix ? name + "-" + suffix : name);
-        var value = valueDefault;
-        var found = false;
-        if (option && suffix != null)
-        {
-            var passwordManager = Components.classes["@mozilla.org/passwordmanager;1"]
-                                            .getService(Components.interfaces.nsIPasswordManager);
-            var e = passwordManager.enumerator;
-            while (!found && e.hasMoreElements())
-            {
-                try
-                {
-                    var pass = e.getNext().QueryInterface(Components.interfaces.nsIPassword);
-                    if (pass.host == this.host && pass.user == user)
-                    {
-                         value = pass.password;
-                         found = true;
-                    }
-                }
-                catch (ex) {}
-            }
-        }
-        return value;
-    },
-
-    saveSecureValue: function(option, name, suffix, value)
-    {
-        return (this.hasLoginManager()
-                    ? this.saveLoginManagerValue(option, name, suffix, value)
-                    : this.savePasswordManagerValue(option, name, suffix, value));
-    },
-
-    saveLoginManagerValue: function(option, name, suffix, value)
-    {
-        if (!value || suffix == null)
-            return false;
-        var valueSave = (option ? value : "n/a");
-        var user = (suffix ? name + "-" + suffix : name);
-
-        var loginManager = Components.classes["@mozilla.org/login-manager;1"].
-                                getService(Components.interfaces.nsILoginManager);
-
-        var newLogin = Components.classes["@mozilla.org/login-manager/loginInfo;1"].
-                                createInstance(Components.interfaces.nsILoginInfo);
-
-        newLogin.init(this.host, 'passhash', null, user, valueSave, "", "");
-
-        var currentLogin = this.findLoginManagerUserLogin(user);
-
-        if ( currentLogin == null)
-            loginManager.addLogin(newLogin);
-        else
-            loginManager.modifyLogin(currentLogin, newLogin);
-        return true;
-    },
-
-    savePasswordManagerValue: function(option, name, suffix, value)
-    {
-        if (!value || suffix == null)
-            return false;
-        var valueSave = (option ? value : "");
-        var user = (suffix ? name + "-" + suffix : name);
-        var passwordManager = Components.classes["@mozilla.org/passwordmanager;1"]
-                                        .getService(Components.interfaces.nsIPasswordManager);
-        try
-        {
-            // Firefox 2 seems to lose info from subsequent addUser calls
-            // addUser on an existing host/user after restarting.
-            passwordManager.removeUser(this.host, user);
-        }
-        catch (ex) {}
-        passwordManager.addUser(this.host, user, valueSave);
-        return true;
-    },
-
-    hasLoginManager: function()
-    {
-        return ("@mozilla.org/login-manager;1" in Components.classes);
-    },
-
-    findLoginManagerUserLogin: function(user)
-    {
-        // Find user from returned array of nsILoginInfo objects
-        var logins = this.findAllLoginManagerLogins();
-        for (var i = 0; i < logins.length; i++)
-            if (logins[i].username == user)
-                return logins[i];
-        return null;
-    },
-
-    findAllLoginManagerLogins: function()
-    {
-        var loginManager = Components.classes["@mozilla.org/login-manager;1"].
-                                getService(Components.interfaces.nsILoginManager);
-        return loginManager.findLogins({}, this.host, "passhash", null);
-    },
+		isIP: function(domain)
+		{
+			return domain.match(/^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))|((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))(%.+)?))$/);
+		},
 
     // TODO: There's probably a better way
     getDomain: function(input)
     {
         var h = input.host.split(".");
-        if (h.length <= 1)
-            return null;
+        if (!h.length)
+        	return null;
+        else if (h.length == 1 || this.isIP(input.host))
+					return input.host;
+
         // Handle domains like co.uk
         if (h.length > 2 && h[h.length-1].length == 2 && h[h.length-2] == "co")
             return h[h.length-3] + '.' + h[h.length-2] + '.' + h[h.length-1];
@@ -324,6 +139,7 @@ var PassHashCommon =
         {
 	        s = b64_hmac_sha1(masterKey, siteTag);
 	      }
+console.log(s);
         // Use the checksum of all characters as a pseudo-randomizing seed to
         // avoid making the injected characters easy to guess.  Note that it
         // isn't random in the sense of not being deterministic (i.e.
@@ -452,18 +268,25 @@ var PassHashCommon =
         return tag;
     },
 
+		isVisible: function(node)
+		{
+			let style = node.ownerDocument.defaultView.getComputedStyle(node);
+			return !(style.display == "none" || style.visibility == "hidden");
+		},
+
+
     // Returns true if an HTML node is some kind of text field.
     isTextNode: function(node)
     {
         try
         {
-            var name = node.localName.toUpperCase();
+            let name = node.localName.toUpperCase();
             if (name == "TEXTAREA" || name == "TEXTBOX" ||
                         (name == "INPUT" &&
-                            (["text", "password", "search", "email", "url"].indexOf(node.type) != -1)))
+                            (["text", "password", "search", "email", "url"].indexOf(node.type) != -1 && this.isVisible(node))))
                 return true;
         }
-        catch(e) {}
+        catch(e) {console.log(e);}
         return false;
     },
 
@@ -547,168 +370,7 @@ var PassHashCommon =
             return def;
         }
     },
-
-    // Build an array sorted by domain name with properties populated, as
-    // available, for site tag, master key and options.
-    getSavedEntries: function()
-    {
-        // Because of Javascript limitations on associative arrays, e.g. not
-        // handling non-alphanumeric,  we'll go to the trouble of building
-        // separate sortable arrays of site tags, master keys and options using
-        // domain/value objects.  After sorting the three arrays we can walk
-        // through them and build the returned array of fully-fleshed-out
-        // objects.
-        var siteTags   = new Array();
-        var masterKeys = new Array();
-        var options    = new Array();
-        if (this.hasLoginManager())
-            this.getAllLoginManagerEntries(siteTags, masterKeys, options);
-        else
-            this.getAllPasswordManagerEntries(siteTags, masterKeys, options);
-
-        var entries = Array();
-        siteTags.sort(  function(a, b) {return a.name.localeCompare(b.name);});
-        masterKeys.sort(function(a, b) {return a.name.localeCompare(b.name);});
-        options.sort(   function(a, b) {return a.name.localeCompare(b.name);});
-        var iSiteTag = 0, iMasterKey = 0, iOption = 0;
-        while (iSiteTag   <   siteTags.length ||
-               iMasterKey < masterKeys.length ||
-               iOption    <    options.length)
-        {
-            // Find the lowest domain name from the three waiting values
-            var next = null;
-            if (iSiteTag < siteTags.length && (next == null ||
-                siteTags[iSiteTag].name < next))
-                next = siteTags[iSiteTag].name;
-            if (iMasterKey < masterKeys.length && (next == null ||
-                masterKeys[iMasterKey].name < next))
-                next = masterKeys[iMasterKey].name;
-            if (iOption < options.length && (next == null ||
-                options[iOption].name < next))
-                next = options[iOption].name;
-            // Grab all data with a matching domain name and advance the corresponding index
-            entries[entries.length] = {name: next};
-            if (iSiteTag < siteTags.length && next == siteTags[iSiteTag].name)
-            {
-                entries[entries.length-1].siteTag = siteTags[iSiteTag].value;
-                iSiteTag++;
-            }
-            else
-                entries[entries.length-1].siteTag = "";
-            if (iMasterKey < masterKeys.length && next == masterKeys[iMasterKey].name)
-            {
-                entries[entries.length-1].masterKey = masterKeys[iMasterKey].value;
-                iMasterKey++;
-            }
-            else
-                entries[entries.length-1].masterKey = "";
-            if (iOption < options.length && next == options[iOption].name)
-            {
-                entries[entries.length-1].options = options[iOption].value;
-                iOption++;
-            }
-            else
-                entries[entries.length-1].options = "";
-        }
-        return entries;
-    },
-
-    // Gather all extension-related FF3 login manager entries.  Return as 3
-    // arrays for site tags, master keys and options.
-    getAllLoginManagerEntries: function(siteTags, masterKeys, options)
-    {
-        var logins = this.findAllLoginManagerLogins();
-        for (var i = 0; i < logins.length; i++)
-        {
-            var login = logins[i];
-            try
-            {
-                if (login.hostname == this.host)
-                {
-                    if (login.username.indexOf("site-tag-") == 0)
-                    {
-                        var o = new Object();
-                        o.name = login.username.substring(9);
-                        o.value = login.password;
-                        siteTags[siteTags.length] = o;
-                    }
-                    else
-                    {
-                        if (login.username.indexOf("master-key-") == 0)
-                        {
-                            var o = new Object();
-                            o.name = login.username.substring(11);
-                            o.value = login.password;
-                            masterKeys[masterKeys.length] = o;
-                        }
-                        else
-                        {
-                            if (login.username.indexOf("options-") == 0)
-                            {
-                                var o = new Object();
-                                o.name = login.username.substring(8);
-                                o.value = login.password;
-                                options[options.length] = o;
-                            }
-                        }
-                    }
-                }
-            }
-            catch(e) {}
-        }
-    },
-
-    // Gather all extension-related FF2 login manager entries.  Return as 3
-    // arrays for site tags, master keys and options.
-    getAllPasswordManagerEntries: function(siteTags, masterKeys, options)
-    {
-        var passwordManager = Components.classes["@mozilla.org/passwordmanager;1"].
-                                    createInstance();
-        passwordManager.QueryInterface(Components.interfaces.nsIPasswordManager);
-        passwordManager.QueryInterface(Components.interfaces.nsIPasswordManagerInternal);
-        var passwordEnumerator = passwordManager.enumerator;
-        while(passwordEnumerator.hasMoreElements())
-        {
-            try
-            {
-                var pw = passwordEnumerator.getNext()
-                        .QueryInterface(Components.interfaces.nsIPasswordInternal);
-                if (pw.host == this.host)
-                {
-                    if (pw.user.indexOf("site-tag-") == 0)
-                    {
-                        var o = new Object();
-                        o.name = pw.user.substring(9);
-                        o.value = pw.password;
-                        siteTags[siteTags.length] = o;
-                    }
-                    else
-                    {
-                        if (pw.user.indexOf("master-key-") == 0)
-                        {
-                            var o = new Object();
-                            o.name = pw.user.substring(11);
-                            o.value = pw.password;
-                            masterKeys[masterKeys.length] = o;
-                        }
-                        else
-                        {
-                            if (pw.user.indexOf("options-") == 0)
-                            {
-                                var o = new Object();
-                                o.name = pw.user.substring(8);
-                                o.value = pw.password;
-                                options[options.length] = o;
-                            }
-                        }
-                    }
-                }
-            }
-            catch(e) {}
-        }
-    },
-
-    getResourceFile: function(uri)
+   getResourceFile: function(uri)
     {
         var handler = Components.classes["@mozilla.org/network/protocol;1?name=file"]
                             .createInstance(Components.interfaces.nsIFileProtocolHandler);

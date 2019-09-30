@@ -4,8 +4,7 @@ resource passhash chrome/content/
 overlay chrome://browser/content/browser.xul chrome://passhash/content/passhash-overlay.xul
 
 locale passhash en-US chrome/locale/en-US/
-locale passhash de-DE chrome/locale/de-DE/
-locale passhash it-IT chrome/locale/it-IT/
 
 skin passhash classic/1.0 chrome/skin/
 style chrome://global/content/customizeToolbar.xul chrome://passhash/skin/passhash-overlay.css
+style chrome://browser/content/browser.xul chrome://passhash/skin/passhash-overlay.css

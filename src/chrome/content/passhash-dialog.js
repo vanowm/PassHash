@@ -32,11 +32,11 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-
+var log = console.log.bind(console);
 var PassHash =
 {
 		// These variables track whether or not dialog regions are hidden.
-		optionsHidden: false, //V@no
+		optionsHidden: false,
 		notesHidden:   true,
 
 		// These variables are initialized to preference defaults and some are kept
@@ -54,16 +54,30 @@ var PassHash =
 		restrictDigits:      null,
 		hashWordSize:        null,
 		sha3:                null,
+		masterKeyAddTag:     null,
+		hashWord:						 "",
 		title: document.title,
-
+		accept: false,
+		lastOptions: {
+			requireDigit: null,
+			requirePunctuation: null,
+			requireMixedCase: null,
+			restrictSpecial: null,
+			restrictDigits: null,
+			hashWordSize: null,
+			sha3: null
+		},
+		defaultOptions: {},
+		arguments: null,
 		onLoad: function()
 		{
+			this.arguments = window.arguments;
 				document.title = this.title + " v" + PassHashCommon.phCore.addon.version;
 				var ctlSiteTag            = document.getElementById("site-tag");
 				var ctlMasterKey          = document.getElementById("master-key");
-				var ctlRequireDigit       = document.getElementById("digit");
-				var ctlRequirePunctuation = document.getElementById("punctuation");
-				var ctlRequireMixedCase   = document.getElementById("mixedCase");
+				var ctlRequireDigit       = document.getElementById("requireDigit");
+				var ctlRequirePunctuation = document.getElementById("requirePunctuation");
+				var ctlRequireMixedCase   = document.getElementById("requireMixedCase");
 				var ctlRestrictSpecial    = document.getElementById("noSpecial");
 				var ctlRestrictDigits     = document.getElementById("digitsOnly");
 				var ctlHashWordSize       = document.getElementById("hashWordSize");
@@ -76,25 +90,43 @@ var PassHash =
 				this.revealSiteTag      = prefs.revealSiteTag;
 				this.revealHashWord     = prefs.revealHashWord;
 				this.guessFullDomain    = prefs.guessFullDomain;
-				this.requireDigit       = prefs.digitDefault;
-				this.requirePunctuation = prefs.punctuationDefault;
-				this.requireMixedCase   = prefs.mixedCaseDefault;
+				this.requireDigit       = prefs.requireDigit;
+				this.requirePunctuation = prefs.requirePunctuation;
+				this.requireMixedCase   = prefs.requireMixedCase;
 				this.restrictSpecial    = false;
 				this.restrictDigits     = false;
-				this.hashWordSize       = prefs.hashWordSizeDefault;
-				this.sha3               = prefs.sha3Default;
+				this.hashWordSize       = prefs.hashWordSize;
+				this.sha3               = prefs.sha3;
+				this.masterKeyAddTag    = prefs.masterKeyAddTag;
 
+				if (prefs.restoreLast)
+				{
+					try
+					{
+						let opts = JSON.parse(prefs.lastOptions);
+						for(let i in opts)
+						{
+							if (i in this.lastOptions)
+							{
+								this[i] = opts[i];
+								this.lastOptions[i] = opts[i];
+							}
+						}
+					}catch(e){console.log(e)};
+				}
 				this.onUnmask();
-
 				var defaultSiteTag = "";
 				var domain = PassHashCommon.getDomain(window.arguments[0].input);
 				var defaultSiteTag = "";
 				if (this.guessSiteTag && domain != null)
-						defaultSiteTag = (this.guessFullDomain ? domain : domain.split(".")[0]);
+						defaultSiteTag = (this.guessFullDomain || PassHashCommon.isIP(domain) ? domain : domain.split(".")[0]);
 
 				let data = PassHashCommon.phCore.loadSecureValue(domain);
-				ctlSiteTag.value = data[0] || defaultSiteTag;
-				ctlMasterKey.value = data[1] || "";
+				this._data = data;
+				ctlSiteTag.value = this.rememberSiteTag ? data[0] || defaultSiteTag : defaultSiteTag;
+				ctlMasterKey.value = this.rememberMasterKey ? data[1] || "" : "";
+				this.masterKeySaved = data[1];
+				this.siteTagSaved = data[0];
 				var strDefOptions = (ctlMasterKey.value ? "" : this.getOptionString());
 				strOptions2 = data[2] || strDefOptions;
 /*
@@ -129,16 +161,10 @@ var PassHash =
 				ctlSha3.checked                = this.sha3;
 				this.updateCheckboxes();
 
-				var btn = document.getElementById("hashWordSize"+this.hashWordSize);
-				// Protect against bad saved hashWordSize value.
-				if (btn == null)
-				{
-						btn = document.getElementById("hashWordSize8");
-//						this.hashWordSize = 8;
-				}
 				ctlHashWordSize.value = this.hashWordSize;
-//				ctlHashWordSize.selectedItem = btn;
 
+				this.notesHidden = document.getElementById("notes").hidden;
+				this.optionsHidden = document.getElementById("options-box").hidden;
 				this.updateOptionsVisibility();     // Hide the options
 				this.updateNotesVisibility();       // Hide the notes
 //V@no
@@ -157,8 +183,9 @@ var PassHash =
 */
 if (!ctlMasterKey.value)
 {
-	if (ctlSiteTag.value)
+	if (this.masterKeyAddTag && ctlSiteTag.value)
 		ctlMasterKey.value = " " + ctlSiteTag.value;
+
 	ctlMasterKey.setSelectionRange(0,0);
 }
 else
@@ -166,54 +193,105 @@ else
 	ctlMasterKey.select();
 }
 ctlMasterKey.focus();
-//V@no
 let r = this.updateHashWord();
 
-this.hashWordCur = document.getElementById("hash-word" ).value; //V@no new
-		},
+this.hashWordCur = this.hashWord;
+//log(this.hashWord);
+this.hashWordSaved = this.hashWord;
+this.masterKeyInitial = ctlMasterKey.value;
+this.siteTagInitial = ctlSiteTag.value;
+			for(let i in this.lastOptions)
+			{
+				this.defaultOptions[i] = this[i];
+			}
+			window.focus();
+		},//onLoad()
 
-		onAccept: function()
+		onAccept: function(e)
 		{
-				if (this.update())
-				{
-if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
-{
-						var domain = PassHashCommon.getDomain(window.arguments[0].input);
-						var strOptions = this.getOptionString();
-						PassHashCommon.phCore.saveSecureValue(this.rememberSiteTag, domain, document.getElementById("site-tag").value, document.getElementById("master-key").value, strOptions);
+log(this.accept, e);
+				if (!this.update())
+					return false
+this.accept = true;
+					let domain = PassHashCommon.getDomain(this.arguments[0].input),
+							strOptions = this.getOptionString(),
+							ctlMasterKey = document.getElementById("master-key"),
+							ctlSiteTag = document.getElementById("site-tag"),
+							siteTag = this.rememberSiteTag ? ctlSiteTag.value : "",
+							masterKey = this.rememberMasterKey ? ctlMasterKey.value : "";
+log(this._data);
+//					if (siteTag != this._data[0] || masterKey != this._data[1] || strOptions != this._data[2])
+//					if ((this._data.length && (siteTag != this._data[0] || masterKey != this._data[1])) || this.masterKeyInitial != ctlMasterKey.value || this.siteTagInitial != ctlSiteTag.value)
+					if ((this._data.length && this._data.toString() != [siteTag, masterKey, strOptions].toString()) || this.masterKeyInitial != ctlMasterKey.value || this.siteTagInitial != ctlSiteTag.value)
+						PassHashCommon.phCore.saveSecureValue(domain, siteTag, masterKey, strOptions);
 
 /*
-						PassHashCommon.saveSecureValue(
-																this.rememberSiteTag,
-																"site-tag",
-																domain,
-																document.getElementById("site-tag").value);
-						PassHashCommon.saveSecureValue(
-																this.rememberMasterKey,
-																"master-key",
-																domain,
-																document.getElementById("master-key").value);
-						PassHashCommon.saveSecureValue(true, "options", domain, strOptions);
+					PassHashCommon.saveSecureValue(
+															this.rememberSiteTag,
+															"site-tag",
+															domain,
+															document.getElementById("site-tag").value);
+					PassHashCommon.saveSecureValue(
+															this.rememberMasterKey,
+															"master-key",
+															domain,
+															document.getElementById("master-key").value);
+					PassHashCommon.saveSecureValue(true, "options", domain, strOptions);
 */
-}
-						window.arguments[0].output = document.getElementById("hash-word" ).value;
-						window.arguments[0].callback(document.getElementById("hash-word" ).value);
-						return true;
+				for(let i in this.lastOptions)
+				{
+					this.lastOptions[i] = this[i];
 				}
-				return false;
-		},
+				PassHashCommon.phCore.pref("lastOptions", JSON.stringify(this.lastOptions));
+				this.arguments[0].output = this.hashWord;
+				this.arguments[0].callback(this.hashWord);
+				return true;
+		},//onAccept()
 
-		onCancel: function()
+		onCancel: function(e)
 		{
-			window.arguments[0].callback(null);
+			if (!this.accept)
+			{
+				this.arguments[0].callback(null);
+log(this.accept, e);
+			}
+
+
 			return true;
 		},
 
 		onSettings: function()
 		{
+			let output = {};
 //			chrome://passhash/content/passhash-options.xul
         window.openDialog("chrome://passhash/content/passhash-options.xul", "dlgopt",
-                          "modal,centerscreen", {});
+                          "modal,centerscreen", output);
+				var prefs = PassHashCommon.loadOptions();
+				this.rememberSiteTag = prefs.rememberSiteTag;
+				this.rememberMasterKey = prefs.rememberMasterKey;
+/*
+				if (!prefs.restoreLast)
+				{
+					for(let i in this.lastOptions)
+					{
+						this.lastOptions[i] = this.defaultOptions[i];
+						if (this[i] == this.lastOptions[i])
+					}
+					document.getElementById("requireDigit").checked        = this.requireDigit;
+					document.getElementById("requirePunctuation").checked  = this.requirePunctuation;
+					document.getElementById("requireMixedCase").checked    = this.requireMixedCase;
+//					document.getElementById("noSpecial").checked     = this.restrictSpecial;
+//					document.getElementById("digitsOnly").checked      = this.restrictDigits;
+					document.getElementById("sha3").checked                = this.sha3;
+					document.getElementById("hashWordSize").value = this.hashWordSize;
+
+					this.updateCheckboxes();
+				}
+*/
+				this.revealSiteTag      = PassHashCommon.phCore.pref("revealSiteTag");
+				this.revealHashWord     = PassHashCommon.phCore.pref("revealHashWord");
+				this.onUnmask();
+
 		},
 		
 		onOptions: function()
@@ -246,7 +324,7 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 				window.sizeToContent();
 		},
 
-		onUnmask: function()
+		onUnmask: function(noupdate)
 		{
 				var ctlSiteTag   = document.getElementById("site-tag");
 				var ctlMasterKey = document.getElementById("master-key");
@@ -255,15 +333,20 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 				{
 						ctlSiteTag  .setAttribute("type", "");
 						ctlMasterKey.setAttribute("type", "");
-						ctlHashWord .setAttribute("type", "");
+						ctlHashWord .value = this.hashWord;
+						ctlHashWord.removeAttribute("type");
 				}
 				else
 				{
 						ctlSiteTag  .setAttribute("type", this.revealSiteTag  ? "" : "password");
 						ctlMasterKey.setAttribute("type", "password");
-						ctlHashWord .setAttribute("type", this.revealHashWord ? "" : "password");
+						ctlHashWord .value = this.revealHashWord ? this.hashWord : this.hashWord.replace(/./g, "\u25CF");
+						if (!this.revealHashWord)
+							ctlHashWord.setAttribute("type", "password");
+
 				}
-				this.update();
+				if (!noupdate)
+					this.update();
 		},
 
 		onBlurSiteTag: function()
@@ -279,6 +362,11 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 				this.update();
 		},
 
+		setHashWord: function(txt)
+		{
+			this.hashWord = txt;
+			this.onUnmask(true);
+		},
 		// Generate hash word if possible
 		// Returns:
 		//  0 = Hash word ok, but unchanged
@@ -287,9 +375,9 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 		//  3 = Hash word successfully generated
 		updateHashWord: function()
 		{
-				var ctlSiteTag   = document.getElementById("site-tag"  );
+				var ctlSiteTag   = document.getElementById("site-tag");
 				var ctlMasterKey = document.getElementById("master-key");
-				var ctlHashWord  = document.getElementById("hash-word" );
+				let ctlHashWord = document.getElementById("hash-word");
 				var r = 0;
 				if (!ctlSiteTag.value)
 						r = 1;
@@ -298,17 +386,22 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 
 
 				ctlMasterKey.classList.toggle("error", (!ctlMasterKey.value));
+				if (this.masterKeySaved)
+					ctlMasterKey.classList.toggle("saved", this.masterKeySaved == ctlMasterKey.value);
+				if (this.siteTagSaved)
+					ctlSiteTag.classList.toggle("saved", this.siteTagSaved == ctlSiteTag.value);
+
 				ctlSiteTag.classList.toggle("error", (!ctlSiteTag.value));
 				document.getElementById("site-tag-bump").disabled = (!ctlSiteTag.value);
 				document.getElementById("copy").disabled = r;
 				if (r)
 				{
-					ctlHashWord.value = "";
+					this.setHashWord("");
 					return r;
 				}
 				// Change the hash word and determine whether or not it was modified.
-				var hashWordOrig = ctlHashWord.value;
-				ctlHashWord.value = PassHashCommon.generateHashWord(
+				var hashWordOrig = this.hashWord;
+				this.setHashWord(PassHashCommon.generateHashWord(
 								ctlSiteTag.value,
 								ctlMasterKey.value,
 								this.hashWordSize,
@@ -317,27 +410,31 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 								this.requireMixedCase,
 								this.restrictSpecial,
 								this.restrictDigits,
-								this.sha3);
-				if (ctlHashWord.value != hashWordOrig)
+								this.sha3));
+
+				if ((this.hashWordSaved || typeof(this.hashWordSaved) == "undefined"))
+					ctlHashWord.classList.toggle("saved", ((typeof(this.hashWordSaved) == "undefined" || this.hashWordSaved == this.hashWord) && this.masterKeySaved === ctlMasterKey.value && this.siteTagSaved === ctlSiteTag.value));
+				if (this.hashWord != hashWordOrig)
 						return 3;   // It was modified
+
 				return 0;       // It was not modified
 		},
 
 		onRequireDigitChanged: function()
 		{
-				this.requireDigit = document.getElementById("digit").checked;
+				this.requireDigit = document.getElementById("requireDigit").checked;
 				this.update();
 		},
 
 		onRequirePunctuationChanged: function()
 		{
-				this.requirePunctuation = document.getElementById("punctuation").checked;
+				this.requirePunctuation = document.getElementById("requirePunctuation").checked;
 				this.update();
 		},
 
 		onRequireMixedCaseChanged: function()
 		{
-				this.requireMixedCase = document.getElementById("mixedCase").checked;
+				this.requireMixedCase = document.getElementById("requireMixedCase").checked;
 				this.update();
 		},
 
@@ -366,11 +463,11 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 
 		updateCheckboxes: function()
 		{
-				document.getElementById("digit").disabled =
+				document.getElementById("requireDigit").disabled =
 								this.restrictDigits;
-				document.getElementById("punctuation").disabled =
+				document.getElementById("requirePunctuation").disabled =
 								(this.restrictSpecial || this.restrictDigits);
-				document.getElementById("mixedCase").disabled =
+				document.getElementById("requireMixedCase").disabled =
 								this.restrictDigits;
 				document.getElementById("noSpecial").disabled =
 								this.restrictDigits;
@@ -416,6 +513,18 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 
 		parseOptionString: function(s)
 		{
+			if (typeof(s) == "number")
+			{
+				for(let i in PassHashCommon.phCore.optionBits)
+				{
+					if (i == "hashWordSize")
+						this[i] = s & PassHashCommon.phCore.optionBits[i];
+					else
+						this[i] = s & PassHashCommon.phCore.optionBits[i] ? true : false;
+				}
+			}
+			else
+			{
 				this.requireDigit       = (s.search(/d/i) >= 0);
 				this.requirePunctuation = (s.search(/p/i) >= 0);
 				this.requireMixedCase   = (s.search(/m/i) >= 0);
@@ -426,11 +535,20 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 				this.hashWordSize = (sizeMatch != null && sizeMatch.length > 0
 																		? parseInt(sizeMatch[0])
 																		: 8);
+			}
 		},
 
 		getOptionString: function()
 		{
-				var opts = '';
+			let b = ~~this.hashWordSize;
+			for(let i in PassHashCommon.phCore.optionBits)
+			{
+				if (i != "hashWordSize" && this[i])
+					b += PassHashCommon.phCore.optionBits[i];
+			}
+			return b;
+
+/*				var opts = '';
 				if (this.requireDigit)
 						opts += 'd';
 				if (this.requirePunctuation)
@@ -445,6 +563,7 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 						opts += 's';
 				opts += this.hashWordSize.toString();
 				return opts;
+*/
 		},
 
 		onSha3Changed: function()
@@ -456,7 +575,7 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 		onCopy: function()
 		{
 			let node = document.getElementById("hash-word" ),
-					text = node.value,
+					text = this.hashWord,
 					that = this;
 
 			if (that.timer || text.replace(/(^\s+|\s+$)/g, "") === "")
@@ -472,6 +591,37 @@ if (this.hashWordCur != document.getElementById("hash-word" ).value) //V@no new
 				node.classList.toggle("flash", false);
 				delete that.timer;
 			}, 1000);
+		},
+		
+		selectHashWord: function(e)
+		{
+				e.target.select();
+			if (e.target.getAttribute("type") != "password")
+			{
+				return true;
+			}
+
+			if (e.type == "copy")
+				return false;
+
+			if (e.type == "popupshowing")
+			{
+				for(let i = 0; i < e.originalTarget.childNodes.length; i++)
+				{
+					if (e.originalTarget.childNodes[i].getAttribute("cmd") == "cmd_copy")
+					{
+						e.originalTarget.childNodes[i].disabled = true;
+						break;
+					}
+				}
+				return true;
+			}
+			return true;
 		}
 
 }
+
+window.addEventListener("unload", function(e)
+{
+	PassHash.onCancel();
+}, false);

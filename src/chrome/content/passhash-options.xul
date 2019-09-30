@@ -9,6 +9,7 @@
     title="&pshOpt.title;" 
     buttons="accept,cancel,disclosure,help"
     onload="PassHashOptions.onLoad();"
+    onunload="PassHashOptions.onUnload();"
     ondialogaccept="return PassHashOptions.onAccept();"
     ondialogdisclosure="PassHashOptions.onDisclosure();"
     ondialoghelp="PassHashOptions.onShowPortable();"
@@ -24,6 +25,7 @@
 
     <script src="passhash-common.js"/>
     <script src="passhash-options.js"/>
+    <script src="passhash-sha3.js"/>
 
     <stringbundle id="pshOpt_strings" src="chrome://passhash/locale/passhash.properties"/>
 
@@ -31,7 +33,7 @@
 
         <hbox>
 
-            <vbox>
+            <vbox flex="1">
 
                 <groupbox id="pshOpt_securityGroup">
 
@@ -62,16 +64,6 @@
                                     selected="false"/>
                             </hbox>
 
-                            <hbox>
-
-                                <radio id="pshOpt_security4"
-                                    label="&pshOpt.security4.label;"
-                                    accesskey="&pshOpt.security4.accesskey;"
-                                    value="4"
-                                    selected="false"/>
-
-                            </hbox>
-
                         </vbox>
 
                     </radiogroup>
@@ -85,29 +77,66 @@
                     <checkbox id="pshOpt_guessSiteTag"
                         label="&pshOpt.guessSiteTag.label;"
                         accesskey="&pshOpt.guessSiteTag.accesskey;"
+                        oncommand="return PassHashOptions.onSecurityLevel(event);"
                         checked="false"/>
 
                     <checkbox id="pshOpt_rememberSiteTag"
                         label="&pshOpt.rememberSiteTag.label;"
                         accesskey="&pshOpt.rememberSiteTag.accesskey;"
+                        oncommand="return PassHashOptions.onSecurityLevel(event);"
                         checked="false"/>
 
                     <checkbox id="pshOpt_rememberMasterKey"
                         label="&pshOpt.rememberMasterKey.label;"
                         accesskey="&pshOpt.rememberMasterKey.accesskey;"
+                        oncommand="return PassHashOptions.onSecurityLevel(event);"
                         checked="false"/>
 
                     <checkbox id="pshOpt_revealSiteTag"
                         label="&pshOpt.revealSiteTag.label;"
                         accesskey="&pshOpt.revealSiteTag.accesskey;"
+                        oncommand="return PassHashOptions.onSecurityLevel(event);"
                         checked="false"/>
 
                     <checkbox id="pshOpt_revealHashWord"
                         label="&pshOpt.revealHashWord.label;"
                         accesskey="&pshOpt.revealHashWord.accesskey;"
+                        oncommand="return PassHashOptions.onSecurityLevel(event);"
                         checked="false"/>
 
-                </groupbox>
+                     <checkbox id="pshOpt_masterKeyAddTag"
+                        label="&pshOpt.masterKeyAddTag.label;"
+                        accesskey="&pshOpt.masterKeyAddTag.accesskey;"
+                        oncommand="return PassHashOptions.onSecurityLevel(event);"
+                        checked="false"/>
+               	</groupbox>
+                <groupbox>
+                  <caption label="&pshOpt.misc.label;"/>
+                  <checkbox id="pshOpt_autocomplete"
+                      label="&pshOpt.autocomplete.label;"
+                      accesskey="&pshOpt.autocomplete.accesskey;"
+                      flex="1"
+                      checked="false"/>
+								</groupbox>
+
+                <groupbox style="position: relative; bottom: 0;">
+
+                    <caption label="&pshOpt.tools.label;"/>
+                  <hbox>
+										<button	id="tools"
+														type="menu"
+														label="&pshOpt.tools.label;"
+														oncommand="PassHashOptions.command(event.target.value);"
+										>
+											<menupopup>
+												<menuitem value="backup" label="&pshOpt.backup.label;"/>
+												<menuitem value="restore" label="&pshOpt.restore.label;"/>
+												<menuseparator/>
+												<menuitem value="delete" label="&pshOpt.delete.label;" tooltiptext="&pshOpt.delete.desc;"/>
+											</menupopup>
+										</button>
+									</hbox>
+               </groupbox>
 
             </vbox>
 
@@ -129,38 +158,75 @@
                         flex="1"
                         checked="false"/>
 
+										<hbox align="center">
+											<label>&pshOpt.markePosition.label;</label>
+											<menulist id="pshOpt_markerPosition"
+											>
+												<menupopup>
+													<menuitem value="0" label="&pshOpt.markePosition.0;"/>
+													<menuitem value="1" label="&pshOpt.markePosition.1;"/>
+													<menuitem value="2" label="&pshOpt.markePosition.2;"/>
+													<menuitem value="3" label="&pshOpt.markePosition.3;"/>
+													<menuitem value="4" label="&pshOpt.markePosition.4;"/>
+												</menupopup>
+											</menulist>
+										</hbox>
+										<hbox align="center">
+											<label>&pshOpt.markeSize.label;</label>
+											<menulist id="pshOpt_markerSize"
+											>
+												<menupopup>
+												</menupopup>
+											</menulist>
+										</hbox>
+
                     <checkbox id="pshOpt_guessFullDomain"
                         label="&pshOpt.guessFullDomain.label;"
                         accesskey="&pshOpt.guessFullDomain.accesskey;"
                         checked="false"/>
 
+                    <checkbox id="pshOpt_dblClick"
+                        label="&pshOpt.dblClick.label;"
+                        accesskey="&pshOpt.dblClick.accesskey;"
+                        checked="false"/>
+
+                    <checkbox id="pshOpt_middleClick"
+                        label="&pshOpt.middleClick.label;"
+                        accesskey="&pshOpt.middleClick.accesskey;"
+                        checked="false"/>
+
+                    <checkbox id="pshOpt_restoreLast"
+                        label="&pshOpt.restoreLast.label;"
+                        accesskey="&pshOpt.restoreLast.accesskey;"
+                        oncommand="return PassHashOptions.onRestoreLast(event);"
+                        checked="false"/>
                 </groupbox>
 
                 <groupbox>
 
                     <caption label="&pshOpt.group4.label;"/>
 
-                    <checkbox id="pshOpt_digitDefault"
+                    <checkbox id="pshOpt_requireDigit"
                         label="&pshOpt.digitDefault.label;"
                         accesskey="&pshOpt.digitDefault.accesskey;"
                         flex="1"
                         checked="true"/>
 
-                    <checkbox id="pshOpt_punctuationDefault"
+                    <checkbox id="pshOpt_requirePunctuation"
                         label="&pshOpt.punctuationDefault.label;"
                         accesskey="&pshOpt.punctuationDefault.accesskey;"
                         flex="1"
                         checked="true"/>
 
-                    <checkbox id="pshOpt_mixedCaseDefault"
+                    <checkbox id="pshOpt_requireMixedCase"
                         label="&pshOpt.mixedCaseDefault.label;"
                         accesskey="&pshOpt.mixedCaseDefault.accesskey;"
                         flex="1"
                         checked="true"/>
 
-                    <checkbox id="pshOpt_sha3Default"
+                    <checkbox id="pshOpt_sha3"
                         label="&pshDlg.sha3.label;"
-                        accesskey="&pshOpt.sha3Default.accesskey;"
+                        accesskey="&pshOpt.sha3.accesskey;"
                         flex="1"
                         class="info"
 												tooltiptext="&pshDlg.sha3.tooltip;"
@@ -174,7 +240,7 @@
 
                     <hbox>
 											<textbox
-												id="pshOpt_hashWordSizeDefault"
+												id="pshOpt_hashWordSize"
 												type="number"
 												min="1"
 												max="100"
@@ -189,6 +255,7 @@
         </hbox>
 
         <iframe id="pshOpt_notes"
+        		persist="hidden"
             src="chrome://passhash/locale/options.html"
             minwidth="480"
             minheight="360"

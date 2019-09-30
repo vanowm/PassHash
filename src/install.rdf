@@ -5,7 +5,7 @@
 	<RDF:Description	RDF:about="urn:mozilla:install-manifest"
 										em:id="passhash@mozilla.wijjo.com"
 										em:name="Password Hasher"
-										em:version="1.1.8"
+										em:version="1.2.0"
 										em:creator="Steve Cooper"
 										em:description="Better security without bursting your brain"
 										em:homepageURL="https://github.com/vanowm/PassHash"
@@ -20,16 +20,6 @@
 				<em:locale>en-EN</em:locale>
 				<em:name>Password Hasher</em:name>
 				<em:description>Better security without bursting your brain</em:description>
-			</Description>
-			<Description>
-				<em:locale>de-DE</em:locale>
-				<em:name>Password Hasher</em:name>
-				<em:description>Bessere Sicherheit, ohne Ihr Gedächtnis zu überfordern</em:description>
-			</Description>
-			<Description>
-				<em:locale>it-IT</em:locale>
-				<em:name>Password Hasher</em:name>
-				<em:description>Aumenta facilmente la sicurezza delle tue password</em:description>
 			</Description>
 		</em:localized>
 	</RDF:Description>

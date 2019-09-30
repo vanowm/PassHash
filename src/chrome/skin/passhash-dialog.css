@@ -27,6 +27,10 @@ textbox.error
 {
 	box-shadow: 0 0 0.5em red;
 }
+textbox.saved
+{
+	box-shadow: 0 0 0.5em green;
+}
 
 @keyframes flash {
   0%   {box-shadow: 0 0 1em transparent;}
@@ -39,6 +43,7 @@ textbox.error
 	font-family: fixed, monospace;
 	font-weight: normal;
 	min-height: 4em;
+	-moz-appearance: menupopup;
 }
 #hash-word.flash
 {

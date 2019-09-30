@@ -34,7 +34,7 @@
 <!ENTITY pshDlg.accept.accesskey              "O">
 <!ENTITY pshDlg.cancel.accesskey              "C">
 <!ENTITY pshDlg.disclosure.accesskey          "f">
-<!ENTITY pshOpt.title                         "Password Hasher Options">
+<!ENTITY pshOpt.title                         "Password Hasher Settings">
 <!ENTITY pshOpt.guessSiteTag.label            "Guess site tag">
 <!ENTITY pshOpt.rememberSiteTag.label         "Remember site tag">
 <!ENTITY pshOpt.rememberMasterKey.label       "Remember master key">
@@ -51,8 +51,8 @@
 <!ENTITY pshOpt.punctuationDefault.label      "At least one punctuation character">
 <!ENTITY pshOpt.mixedCaseDefault.label        "Both upper and lower-case letters">
 <!ENTITY pshOpt.hashWordSizeDefault.label     "Default Size">
-<!ENTITY pshOpt.group1.label                  "Security Level">
-<!ENTITY pshOpt.group2.label                  "Custom Options">
+<!ENTITY pshOpt.group1.label                  "Security Level Preset">
+<!ENTITY pshOpt.group2.label                  "Security Level Options">
 <!ENTITY pshOpt.group3.label                  "Interface Options">
 <!ENTITY pshOpt.group4.label                  "Default Requirements">
 <!ENTITY pshOpt.security1.label               "Light">
@@ -86,4 +86,28 @@
 <!ENTITY pshDlg.sha3.label               		  "SHA3-512 alghoritm">
 <!ENTITY pshDlg.sha3.tooltip             		  "Automatically applied with size 27 and above">
 <!ENTITY pshDlg.sha3.accesskey            		"3">
-<!ENTITY pshOpt.sha3Default.accesskey      		"3">
+<!ENTITY pshOpt.sha3.accesskey             		"3">
+<!ENTITY pshOpt.dblClick.label                "Double click opens dialog">
+<!ENTITY pshOpt.dblClick.accesskey            "u">
+<!ENTITY pshOpt.middleClick.label             "Middle click opens dialog">
+<!ENTITY pshOpt.middleClick.accesskey         "i">
+<!ENTITY pshOpt.restoreLast.label             "Remember last used options">
+<!ENTITY pshOpt.restoreLast.accesskey         "e">
+<!ENTITY pshOpt.masterKeyAddTag.label         "Append site tag to master key">
+<!ENTITY pshOpt.masterKeyAddTag.accesskey     "y">
+<!ENTITY pshOpt.tools.label                   "Tools">
+<!ENTITY pshOpt.backup.label                  "Backup">
+<!ENTITY pshOpt.restore.label                 "Restore">
+<!ENTITY pshOpt.delete.label                  "Delete saved logins">
+<!ENTITY pshOpt.delete.desc                   "Delete options for websites saved by Password Hasher">
+<!ENTITY pshOpt.markePosition.label           "Markers position">
+<!ENTITY pshOpt.markePosition.0			          "Bottom">
+<!ENTITY pshOpt.markePosition.1     			    "Left">
+<!ENTITY pshOpt.markePosition.2         			"Right">
+<!ENTITY pshOpt.markePosition.3         			"Left Compact">
+<!ENTITY pshOpt.markePosition.4         			"Right Compact">
+<!ENTITY pshOpt.markeSize.label         			"Marker size">
+<!ENTITY pshOpt.autocomplete.label         		"Force autocomplete">
+<!ENTITY pshOpt.autocomplete.desc         		"Force autocomplete on websites that tries to prevent it.">
+<!ENTITY pshOpt.autocomplete.accesskey     		"c">
+<!ENTITY pshOpt.misc.label         						"Misc.">

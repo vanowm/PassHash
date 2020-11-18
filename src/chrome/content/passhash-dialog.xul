@@ -9,10 +9,10 @@
     buttons="accept,cancel,disclosure, help"
     title="&pshDlg.title.label;"
     onload="PassHash.onLoad();"
-    ondialogaccept="return PassHash.onAccept();"
-    ondialogcancel="return PassHash.onCancel();"
-    ondialogdisclosure="PassHash.onDisclosure();"
-    ondialoghelp = "PassHash.onSettings();"
+    ondialogaccept="return PassHash.onAccept(event);"
+    ondialogcancel="return PassHash.onCancel(event);"
+    ondialogdisclosure="PassHash.onDisclosure(event);"
+    ondialoghelp = "PassHash.onSettings(event);"
     buttonlabelaccept="&pshDlg.accept.label;"
     buttonlabelcancel="&pshDlg.cancel.label;"
     buttonlabeldisclosure="&pshDlg.disclosure.label;"
@@ -206,7 +206,7 @@
                             oncommand="PassHash.onRequirePunctuationChanged();"
                             checked="false"
                             />
-
+												<hbox id="restrictPunctuation"/>
                         <checkbox
                             id="requireMixedCase"
                             label="&pshDlg.mixedCase.label;"

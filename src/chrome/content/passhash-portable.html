@@ -26,6 +26,14 @@
 <!--!content:passhash-common.js-->
 </script>
 
+<script language="JavaScript" type="text/javascript">
+var optionBits = <!--!optionBits-->;
+PassHashCommon.phCore.version = "<!--!version-->";
+PassHashCommon.phCore.filter2string = function <!--!phCore.filter2string-->;
+PassHashCommon.phCore.string2filter = function <!--!phCore.string2filter-->;
+PassHashCommon.phCore.optionBits = optionBits;
+</script>
+
 </head>
 
 <body onload="onLoad();">
@@ -123,7 +131,7 @@
                             <tr>
                                 <td>
                                     <label class="option">
-		                                    <input id="digit" type="checkbox" class="option"
+		                                    <input id="requireDigit" type="checkbox" class="option"
 			                                    checked
 			                                    onClick="update();"
 		                                    />
@@ -134,18 +142,23 @@
                             <tr>
                                 <td>
                                     <label class="option">
-	                                    	<input id="punctuation" type="checkbox" class="option"
+	                                    	<input id="requirePunctuation" type="checkbox" class="option"
 			                                    checked
-			                                    onClick="update();"
+			                                    onClick="onRequirePunctuation(this)"
 		                                    />
                                         ${passhashPortablePunctuationLabel}
                                     </label>
                                 </td>
                             </tr>
                             <tr>
+                                <td id="restrictPunctuation">
+                                    {RESTRICTPUNCTUATION}
+                                </td>
+                            </tr>
+                            <tr>
                                 <td>
                                     <label class="option">
-		                                    <input id="mixedCase" type="checkbox" class="option"
+		                                    <input id="requireMixedCase" type="checkbox" class="option"
 			                                    checked
 			                                    onClick="update();"
 		                                    />
@@ -179,7 +192,7 @@
                             <tr>
                                 <td>
                                     <label class="option">
-		                                    <input id="noSpecial" type="checkbox" class="option"
+		                                    <input id="restrictSpecial" type="checkbox" class="option"
 		                                    onClick="onNoSpecial(this);"
 		                                    />
                                         ${passhashPortableNoSpecialLabel}
@@ -189,7 +202,7 @@
                             <tr>
                                 <td>
                                     <label class="option">
-		                                    <input id="digitsOnly" type="checkbox" class="option"
+		                                    <input id="restrictDigits" type="checkbox" class="option"
 		                                    onClick="onDigitsOnly(this);"
 		                                    />
                                         ${passhashPortableDigitsOnlyLabel}

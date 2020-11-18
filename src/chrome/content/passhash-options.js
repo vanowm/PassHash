@@ -84,6 +84,11 @@ var PassHashOptions =
 			document.getElementById("pshOpt_guessSiteTag").
 							addEventListener("change", this.onSecurityLevel, false);
 
+			let obj = document.getElementById("pshOpt_hashWordSize");
+			obj.addEventListener("change", this.onHashWordSize, false);
+			obj.addEventListener("input", this.onHashWordSize, false);
+
+			this.onHashWordSize({target: obj});
 			this.notesHidden = document.getElementById("pshOpt_notes").hidden;
 			this.updateNotesVisibility();
 			PassHashCommon.phCore.onPrefChange.addObserver(this.initOptions);
@@ -144,7 +149,7 @@ var PassHashOptions =
 				opts.requirePunctuation  = document.getElementById("pshOpt_requirePunctuation").checked;
 				opts.requireMixedCase    = document.getElementById("pshOpt_requireMixedCase"  ).checked;
 				opts.hashWordSize = PassHashOptions.readhashWordSize();
-				opts.sha3                = document.getElementById("pshOpt_sha3"              ).checked;
+				opts.sha3                = "_checked" in document.getElementById("pshOpt_sha3") ? document.getElementById("pshOpt_sha3")._checked : document.getElementById("pshOpt_sha3").checked;
 				opts.dblClick            = document.getElementById("pshOpt_dblClick"          ).checked;
 				opts.middleClick         = document.getElementById("pshOpt_middleClick"       ).checked;
 				opts.restoreLast         = document.getElementById("pshOpt_restoreLast"       ).checked;
@@ -163,6 +168,8 @@ var PassHashOptions =
 			document.getElementById("pshOpt_requireMixedCase"   ).disabled = checked;
 			document.getElementById("pshOpt_sha3"               ).disabled = checked;
 			document.getElementById("pshOpt_hashWordSize"       ).disabled = checked;
+			document.getElementById("pshOpt_requireBox"         ).setAttribute("disabled", checked);
+			document.getElementById("pshOpt_hashWordSizeBox"    ).setAttribute("disabled", checked);
 		},
 
 		onDisclosure: function()
@@ -191,6 +198,12 @@ var PassHashOptions =
 						//  - localized string substitutions marked by ${tag}
 						var fillSiteTagList = false;
 						var more = true;
+						var restrictPunctuationOptions = "";
+						for(let i = 1; i < 31; i++)
+						{
+							restrictPunctuationOptions += '<label class="rp" checked="true" title="' + PassHashCommon.punctuation[i-1] + '"><input id="restrictPunctuation' + i + '" type="checkbox" class="option rp" checked="true" onclick="onRestrictPunctuation(this)"/><span>' + String.fromCharCode(32 + i + (i > 15 ? i > 22 ? i > 27 ? 63 : 36 : 10 : 0) ) + '</span></label>';
+						}
+						
 						while (more)
 						{
 								var line = {};
@@ -200,7 +213,13 @@ var PassHashOptions =
 								if (!fillSiteTagList && line.value.search(/<select.* id="site-tag-list"/i) >= 0)
 										fillSiteTagList = true;
 
-								line.value = line.value.replace(/<!--!version-->/, PassHashCommon.phCore.addon.version);
+								line.value = line.value.replace(/<!--!version-->/g, PassHashCommon.phCore.addon.version);
+								line.value = line.value.replace(/<!--!optionBits-->/, JSON.stringify(PassHashCommon.phCore.optionBits));
+								line.value = line.value.replace(/{RESTRICTPUNCTUATION}/, restrictPunctuationOptions);
+								line.value = line.value.replace(/<!--!phCore\.([a-zA-Z0-9_]+)-->/, function(a, b)
+								{
+									return PassHashCommon.phCore[b];
+								});
 								PassHashCommon.streamWriteExpandedLine(streamOut, line.value);
 
 								// Inject site tag option list after finding select element body.
@@ -333,7 +352,7 @@ var PassHashOptions =
 		readhashWordSize: function()
 		{
 				var btn = document.getElementById("pshOpt_hashWordSize");
-				return (btn != null ? parseInt(btn.value) : 8);
+				return (btn != null ? ~~btn.value : 8) || 8;
 		},
 
 		getHash: function(str)
@@ -498,17 +517,13 @@ log(e);
 		onCmdBackup: function(e)
 		{
 log(arguments);
-			let pass = {value: null},
-					prompts = Cc["@mozilla.org/embedcomp/prompt-service;1"].getService(Ci.nsIPromptService);
+			let pass = {value: null};
+//					prompts = Cc["@mozilla.org/embedcomp/prompt-service;1"].getService(Ci.nsIPromptService);
 
-			pass = this.promptPassword(null, null, true);
 //			if (!prompts.promptPassword(window, "Encrypt backup with a password", "Enter a password\nLeave blank to skip encryption", pass, null, {}))
 //				return;
 
 //			pass = pass.value;
-
-			if (pass === null)
-				return false;
 
 			let data = {settings:{}},
 					cipherVersion = String.fromCharCode(1);
@@ -517,6 +532,11 @@ log(arguments);
 					pref = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefService).getDefaultBranch(core.PREF),
 					prefList = pref.getChildList("", {}).sort(),
 					passList = core.getSavedEntries();
+
+			pass = this.promptPassword(null, "Found " + passList.length + " saved password setting" + (passList.length > 1 ? "s" : "") + "", true);
+			if (pass === null)
+				return false;
+
 			for(let i = 0; i < prefList.length; i++)
 			{
 				data.settings[prefList[i]] = core.pref(prefList[i]);
@@ -535,6 +555,7 @@ log(arguments);
 //				data.list[passList[i].domain] = [passList[i].siteTag, passList[i].masterKey, passList[i].options];
 //				delete passList[i].domain;
 			}
+
 			if (pass !== "")
 			{
 				data.list["!"] = (new Date()).getTime();
@@ -793,5 +814,24 @@ log(e);
 				return this[f].apply(this, Object.assign([], arguments).slice(1));
 			}
 			return false
+		},
+		
+		onHashWordSize: function(e)
+		{
+			let sha3 = document.getElementById("pshOpt_sha3");
+			if (e.target.value > 26)
+			{
+				sha3._checked = sha3.checked;
+				sha3.disabled = true;
+				sha3.checked = true;
+			}
+			else
+			{
+				sha3.disabled = false;
+				if ("_checked" in sha3)
+					sha3.checked = sha3._checked;
+
+				delete sha3._checked;
+			}
 		}
 }

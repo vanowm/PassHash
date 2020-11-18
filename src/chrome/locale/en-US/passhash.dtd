@@ -101,11 +101,12 @@
 <!ENTITY pshOpt.delete.label                  "Delete saved logins">
 <!ENTITY pshOpt.delete.desc                   "Delete options for websites saved by Password Hasher">
 <!ENTITY pshOpt.markePosition.label           "Markers position">
-<!ENTITY pshOpt.markePosition.0			          "Bottom">
-<!ENTITY pshOpt.markePosition.1     			    "Left">
-<!ENTITY pshOpt.markePosition.2         			"Right">
-<!ENTITY pshOpt.markePosition.3         			"Left Compact">
-<!ENTITY pshOpt.markePosition.4         			"Right Compact">
+<!ENTITY pshOpt.markePosition.1			          "Bottom">
+<!ENTITY pshOpt.markePosition.2     			    "Left">
+<!ENTITY pshOpt.markePosition.4         			"Right">
+<!ENTITY pshOpt.markePosition.9         			"Bottom Compact">
+<!ENTITY pshOpt.markePosition.10         			"Left Compact">
+<!ENTITY pshOpt.markePosition.12         			"Right Compact">
 <!ENTITY pshOpt.markeSize.label         			"Marker size">
 <!ENTITY pshOpt.autocomplete.label         		"Force autocomplete">
 <!ENTITY pshOpt.autocomplete.desc         		"Force autocomplete on websites that tries to prevent it.">

@@ -10,6 +10,7 @@ else if (navigator.appName.indexOf("Microsoft") != -1)
 var siteTagLast = '';
 var masterKeyLast = '';
 var isSha3 = false;
+var options = {restrictPunctuation: 0};
 
 function onLoad()
 {
@@ -52,24 +53,26 @@ function update(nofocus)
     var hashWord  = document.getElementById('hash-word');
     //var hashapass = b64_hmac_sha1(masterKey.value, siteTag.value).substr(0,8);
     var hashWordSize       = document.getElementById("hashWordSize").value;
-    var requireDigit       = document.getElementById("digit").checked;
-    var requirePunctuation = document.getElementById("punctuation").checked;
-    var requireMixedCase   = document.getElementById("mixedCase").checked;
-    var restrictSpecial    = document.getElementById("noSpecial").checked;
-    var restrictDigits     = document.getElementById("digitsOnly").checked;
+    var requireDigit       = document.getElementById("requireDigit").checked;
+    var requirePunctuation = document.getElementById("requirePunctuation").checked;
+    var requireMixedCase   = document.getElementById("requireMixedCase").checked;
+    var restrictSpecial    = document.getElementById("restrictSpecial").checked;
+    var restrictDigits     = document.getElementById("restrictDigits").checked;
     if (!siteTag.value || !masterKey.value)
     	return;
 
-    hashWord.value = PassHashCommon.generateHashWord(
-            siteTag.value,
-            masterKey.value,
-            hashWordSize,
-            requireDigit,
-            requirePunctuation,
-            requireMixedCase,
-            restrictSpecial,
-            restrictDigits,
-            isSha3);
+    hashWord.value = PassHashCommon.generateHashWord({
+			siteTag: siteTag.value,
+			masterKey: masterKey.value,
+			hashWordSize: hashWordSize,
+			requireDigit: requireDigit,
+			requirePunctuation: requirePunctuation,
+			requireMixedCase: requireMixedCase,
+			restrictSpecial: restrictSpecial,
+			restrictDigits: restrictDigits,
+			sha3: isSha3,
+			restrictPunctuation: options.restrictPunctuation
+    });
     if (!nofocus)
       hashWord.focus();
 
@@ -134,17 +137,24 @@ function onReveal(fld)
 
 function onNoSpecial(fld)
 {
-    document.getElementById('punctuation').disabled = fld.checked;
+    document.getElementById('requirePunctuation').disabled = fld.checked;
+		if (fld.checked)
+    	document.getElementById('restrictPunctuation').setAttribute("disabled", true);
+    else
+    	document.getElementById('restrictPunctuation').removeAttribute("disabled");
     update();
 }
 
 function onDigitsOnly(fld)
 {
-    document.getElementById('punctuation').disabled = fld.checked;
-    document.getElementById("digit"      ).disabled = fld.checked;
-    document.getElementById("punctuation").disabled = fld.checked;
-    document.getElementById("mixedCase"  ).disabled = fld.checked;
-    document.getElementById("noSpecial"  ).disabled = fld.checked;
+    document.getElementById('requirePunctuation').disabled = fld.checked;
+    document.getElementById("requireDigit"      ).disabled = fld.checked;
+    document.getElementById("requireMixedCase"  ).disabled = fld.checked;
+    document.getElementById("restrictSpecial"  ).disabled = fld.checked;
+		if (fld.checked)
+    	document.getElementById('restrictPunctuation').setAttribute("disabled", true);
+    else
+    	document.getElementById('restrictPunctuation').removeAttribute("disabled");
     update();
 }
 
@@ -159,24 +169,49 @@ function onSelectSiteTag(fld)
 {
     var siteTag = document.getElementById('site-tag');
     siteTag.value = fld[fld.selectedIndex].text;
-    var options = fld[fld.selectedIndex].value;
-    document.getElementById("digit"      ).checked  = (options.search(/d/i) >= 0);
-    document.getElementById("punctuation").checked  = (options.search(/p/i) >= 0);
-    document.getElementById("mixedCase"  ).checked  = (options.search(/m/i) >= 0);
-    document.getElementById("noSpecial"  ).checked  = (options.search(/r/i) >= 0);
-    document.getElementById("digitsOnly" ).checked  = (options.search(/g/i) >= 0);
-    document.getElementById('punctuation').disabled = (options.search(/[rg]/i) >= 0);
-    document.getElementById("digit"      ).disabled = (options.search(/g/i) >= 0);
-    document.getElementById("punctuation").disabled = (options.search(/g/i) >= 0);
-    document.getElementById("mixedCase"  ).disabled = (options.search(/g/i) >= 0);
-    document.getElementById("noSpecial"  ).disabled = (options.search(/g/i) >= 0);
-    document.getElementById("sha3"       ).checked  = (options.search(/s/i) >= 0);
+    var val = parseFloat(fld[fld.selectedIndex].value);
+    if (isNaN(val) || val != fld[fld.selectedIndex].value)
+    	val = fld[fld.selectedIndex].value;
+
+    options = new PassHashCommon.parseOptionString(val);
+
+		for(var i in optionBits)
+		{
+			if (i == "restrictPunctuationLegacy")
+				continue;
+
+			if (i == "restrictPunctuation")
+			{
+				var rp = options[i];
+				for(let i = 1; i < 31; i++)
+				{
+					let obj = document.getElementById("restrictPunctuation" + i),
+							checked = (!(rp >> i & 1) && (i <= 15 || (i > 15 && rp !== null)));
+
+					obj.checked = checked;
+					if (checked)
+					{
+						obj.setAttribute("checked", true);
+						obj.parentNode.setAttribute("checked", true);
+					}
+					else
+					{
+						obj.removeAttribute("checked");
+						obj.parentNode.removeAttribute("checked");
+					}
+						
+				}
+			}
+			else if (i == "hashWordSize")
+				document.getElementById(i).value = options[i];
+			else
+				document.getElementById(i).checked = options[i];
+		}
+    document.getElementById('requirePunctuation').disabled = options.restrictSpecial || options.restrictDigits;
+    document.getElementById("requireDigit"      ).disabled = options.restrictDigits
+    document.getElementById("requireMixedCase"  ).disabled = options.restrictDigits
+    document.getElementById("restrictSpecial"  ).disabled = options.restrictDigits
     isSha3 = document.getElementById("sha3").checked;
-    var sizeMatch = options.match(/[0-9]+/);
-    var hashWordSize = (sizeMatch != null && sizeMatch.length > 0
-                                ? parseInt(sizeMatch[0])
-                                : 26);
-		document.getElementById("hashWordSize").value = hashWordSize;
 		onUpdate();
     if (validate())
         update();
@@ -190,7 +225,7 @@ function onLeaveSelectSiteTag(fld)
 
 function filter(obj)
 {
-	let s = obj.selectionStart,
+	var s = obj.selectionStart,
 			e = obj.selectionEnd,
 			val = Math.min(~~obj.getAttribute("max"), Math.max(~~obj.getAttribute("min"), ~~obj.value.replace(/[^0-9]/g, "")));
 	obj.value = val;
@@ -209,7 +244,7 @@ function onSha3Change()
 
 function onUpdate(obj)
 {
-	let isSize = true;
+	var isSize = true;
 	if (!obj)
 	{
 		isSize = false;
@@ -235,4 +270,44 @@ function onUpdate(obj)
 		return;
 
 	this.hashWordSizePrev = obj.value;
+}
+
+function onRestrictPunctuation(obj)
+{
+	let bit = ~~obj.id.replace("restrictPunctuation", "");
+
+	let r = options.restrictPunctuation;
+	if (obj.checked)
+		r &= ~(1 << bit);
+	else
+	{
+		r |= 1 << bit;
+		if (r == 32767)
+		{
+			r = options.restrictPunctuation;
+			obj.checked = true;
+		}
+	}
+	if (obj.checked)
+	{
+		obj.parentNode.setAttribute("checked", true);
+		obj.setAttribute("checked", true);
+	}
+	else
+	{
+		obj.parentNode.removeAttribute("checked");
+		obj.removeAttribute("checked");
+	}
+
+	options.restrictPunctuation = r
+	update();
+}
+function onRequirePunctuation(obj)
+{
+	if (obj.checked)
+  	document.getElementById('restrictPunctuation').removeAttribute("disabled");
+  else
+  	document.getElementById('restrictPunctuation').setAttribute("disabled", true);
+
+	update();
 }

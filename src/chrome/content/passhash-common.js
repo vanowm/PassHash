@@ -114,7 +114,8 @@ var PassHashCommon =
     // far more difficult to guess the injected special characters without
     // knowing the master key.
     // TODO: Is it ok to assume ASCII is ok for adjustments?
-    generateHashWord: function(
+    generateHashWord: function(opt)
+/*
                 siteTag,
                 masterKey,
                 hashWordSize,
@@ -124,7 +125,18 @@ var PassHashCommon =
                 restrictSpecial,
                 restrictDigits,
                 sha3)
+*/
     {
+    	let siteTag = opt.siteTag,
+    			masterKey = opt.masterKey,
+    			hashWordSize = opt.hashWordSize,
+    			restrictDigits = opt.restrictDigits,
+    			requirePunctuation = opt.requirePunctuation,
+    			requireMixedCase = opt.requireMixedCase,
+    			restrictSpecial = opt.restrictSpecial,
+    			requireDigit = opt.requireDigits,
+    			restrictPunctuation = opt.restrictPunctuation,
+    			sha3 = opt.sha3;
         // Start with the SHA1-encrypted master key/site tag.
         var s;
         if (sha3 || hashWordSize > 26)
@@ -139,7 +151,8 @@ var PassHashCommon =
         {
 	        s = b64_hmac_sha1(masterKey, siteTag);
 	      }
-console.log(s);
+
+
         // Use the checksum of all characters as a pseudo-randomizing seed to
         // avoid making the injected characters easy to guess.  Note that it
         // isn't random in the sense of not being deterministic (i.e.
@@ -160,8 +173,23 @@ console.log(s);
             // Inject digit, punctuation, and mixed case as needed.
             if (requireDigit)
                 s = PassHashCommon.injectSpecialCharacter(s, 0, 4, sum, hashWordSize, 48, 10);
+ 
             if (requirePunctuation && !restrictSpecial)
-                s = PassHashCommon.injectSpecialCharacter(s, 1, 4, sum, hashWordSize, 33, 15);
+                s = PassHashCommon.injectSpecialCharacter(s, 1, 4, sum, hashWordSize, 33, 15, restrictPunctuation);
+            else if (restrictPunctuation)
+            {
+							s = s.replace(/[^a-zA-Z0-9]+/g, function(c, i, s)
+							{
+								let r = sum;
+								do
+								{
+									r = r + c.charCodeAt(0) + i;
+									r = Math.floor(r % 124);
+								}
+								while(!((r > 47 && r < 58) || (r > 64 && r < 91) || (r > 96 && r < 123)))
+								return String.fromCharCode(r);
+							});
+            }
             if (requireMixedCase)
             {
                 s = PassHashCommon.injectSpecialCharacter(s, 2, 4, sum, hashWordSize, 65, 26);
@@ -186,21 +214,32 @@ console.log(s);
     //  lenOut   = length of head of string that will eventually survive truncation.
     //  cStart   = character code for first valid injected character.
     //  cNum     = number of valid character codes starting from cStart.
-    injectSpecialCharacter: function(sInput, offset, reserved, seed, lenOut, cStart, cNum)
+    injectSpecialCharacter: function(sInput, offset, reserved, seed, lenOut, cStart, cNum, filter)
     {
         var pos0 = seed % lenOut;
         var pos = (pos0 + offset) % lenOut;
-        // Check if a qualified character is already present
-        // Write the loop so that the reserved block is ignored.
-        for (var i = 0; i < lenOut - reserved; i++)
+				var list = "";
+        if (filter === undefined || filter === null)
         {
-            var i2 = (pos0 + reserved + i) % lenOut
-            var c = sInput.charCodeAt(i2);
-            if (c >= cStart && c < cStart + cNum)
-                return sInput;  // Already present - nothing to do
-        }
+	        // Check if a qualified character is already present
+	        // Write the loop so that the reserved block is ignored.
+	        for (var i = 0; i < lenOut - reserved; i++)
+	        {
+	            var i2 = (pos0 + reserved + i) % lenOut
+	            var c = sInput.charCodeAt(i2);
+	            if (c >= cStart && c < cStart + cNum)
+	                return sInput;  // Already present - nothing to do
+	        }
+					for(let i = 0; i < cNum; i++)
+						list += String.fromCharCode(cStart + i);
+      	}
+      	else
+      	{
+					list = PassHashCommon.phCore.filter2string(~~filter ^ PassHashCommon.phCore.optionBits["restrictPunctuation" + (filter ? "" : "Legacy")]);
+      	}
         var sHead   = (pos > 0 ? sInput.substring(0, pos) : "");
-        var sInject = String.fromCharCode(((seed + sInput.charCodeAt(pos)) % cNum) + cStart);
+//        var sInject = String.fromCharCode(((seed + sInput.charCodeAt(pos)) % cNum) + cStart);
+        var sInject = list.substr(((seed + sInput.charCodeAt(pos)) % list.length), 1);
         var sTail   = (pos + 1 < sInput.length ? sInput.substring(pos+1, sInput.length) : "");
         return (sHead + sInject + sTail);
     },
@@ -222,14 +261,15 @@ console.log(s);
                 break;
             if (j > 0)
                 s += sInput.substring(i, i + j);
-            s += String.fromCharCode((seed + i) % 26 + 65);
+// https://github.com/wijjo/passhash/issues/3
+            s += String.fromCharCode((seed + i + j) % 26 + 65);
+//            s += String.fromCharCode((seed + i) % 26 + 65);
             i += (j + 1);
         }
         if (i < sInput.length)
             s += sInput.substring(i);
         return s;
     },
-
     // Convert input string to digits-only.
     // Parameters:
     //  sInput = input string
@@ -246,7 +286,9 @@ console.log(s);
                 break;
             if (j > 0)
                 s += sInput.substring(i, i + j);
+// https://github.com/wijjo/passhash/issues/3
             s += String.fromCharCode((seed + sInput.charCodeAt(i)) % 10 + 48);
+//            s += String.fromCharCode((seed + sInput.charCodeAt(i) + j) % 10 + 48);
             i += (j + 1);
         }
         if (i < sInput.length)
@@ -467,7 +509,76 @@ console.log(s);
         }
         while (file.exists() && (action == 0));
         return file;
-    }
+    },
+
+		parseOptionString: function(s)
+		{
+			if (typeof(s) == "number")
+			{
+				for(let i in PassHashCommon.phCore.optionBits)
+				{
+					if (i == "restrictPunctuationLegacy")
+						continue;
+
+					if (i == "restrictPunctuation")
+					{
+						let m = ("" + s).match(/([0-9]+)([^0-9]([0-9]+))?/) || 0;
+						this[i] = ~~m[3];
+					}
+					else if (i == "hashWordSize")
+						this[i] = s & PassHashCommon.phCore.optionBits[i];
+					else
+						this[i] = s & PassHashCommon.phCore.optionBits[i] ? true : false;
+				}
+			}
+			else
+			{
+				this.requireDigit       = (s.search(/d/i) >= 0);
+				this.requirePunctuation = (s.search(/p/i) >= 0);
+				this.requireMixedCase   = (s.search(/m/i) >= 0);
+				this.restrictSpecial    = (s.search(/r/i) >= 0);
+				this.restrictDigits     = (s.search(/g/i) >= 0);
+				this.restrictPunctuation  = 0;
+				this.sha3               = (s.search(/s/i) >= 0);
+				var sizeMatch = s.match(/[0-9]+/);
+				this.hashWordSize = (sizeMatch != null && sizeMatch.length > 0
+																		? parseInt(sizeMatch[0])
+																		: 8);
+			}
+			return this;
+		},
+		punctuation: [
+			"Exclamation point",
+			"Double quotes",
+			"Number sign",
+			"Dollar sign",
+			"Percent sign",
+			"Ampersand",
+			"Single quote",
+			"Opening parenthesis",
+			"Closing parenthesis",
+			"Asterisk",
+			"Plus sign",
+			"Comma",
+			"Minus sign - hyphen",
+			"Period",
+			"Slash",
+			"Colon",
+			"Semicolon",
+			"Less than sign",
+			"Equal sign",
+			"Greater than sign",
+			"Question mark",
+			"At symbol",
+			"Opening bracket",
+			"Backslash",
+			"Closing bracket",
+			"Caret - circumflex",
+			"Underscore",
+			"Opening brace",
+			"Vertical bar",
+			"Closing brace"
+		]
 
     //NB: Make sure not to add a comma after the last function for older IE compatibility.
 };

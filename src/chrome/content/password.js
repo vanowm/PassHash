@@ -32,7 +32,11 @@ var PassHash = {
 		$("msg").collapsed = !this._params.msg;
 
 		$("password").focus();
-		if (!this._params.newPass)
+		if (this._params.newPass)
+		{
+			$("label").value = $("label").getAttribute("value2");
+		}
+		else
 		{
 			$("pass2").collapsed = true;
 			$("msg.warning").collapsed = true;

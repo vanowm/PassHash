@@ -163,11 +163,12 @@
 											<menulist id="pshOpt_markerPosition"
 											>
 												<menupopup>
-													<menuitem value="0" label="&pshOpt.markePosition.0;"/>
 													<menuitem value="1" label="&pshOpt.markePosition.1;"/>
 													<menuitem value="2" label="&pshOpt.markePosition.2;"/>
-													<menuitem value="3" label="&pshOpt.markePosition.3;"/>
 													<menuitem value="4" label="&pshOpt.markePosition.4;"/>
+													<menuitem value="9" label="&pshOpt.markePosition.9;"/>
+													<menuitem value="10" label="&pshOpt.markePosition.10;"/>
+													<menuitem value="12" label="&pshOpt.markePosition.12;"/>
 												</menupopup>
 											</menulist>
 										</hbox>
@@ -200,9 +201,7 @@
                         accesskey="&pshOpt.restoreLast.accesskey;"
                         oncommand="return PassHashOptions.onRestoreLast(event);"
                         checked="false"/>
-                </groupbox>
-
-                <groupbox>
+                <groupbox id="pshOpt_requireBox">
 
                     <caption label="&pshOpt.group4.label;"/>
 
@@ -234,7 +233,7 @@
 
                 </groupbox>
 
-                <groupbox>
+                <groupbox id="pshOpt_hashWordSizeBox">
 
                     <caption label="&pshOpt.hashWordSizeDefault.label;"/>
 
@@ -242,13 +241,15 @@
 											<textbox
 												id="pshOpt_hashWordSize"
 												type="number"
-												min="1"
+												min="4"
 												max="100"
 											/>
 
                     </hbox>
 
                 </groupbox>
+                </groupbox>
+
 
             </vbox>
 

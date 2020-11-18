@@ -20,3 +20,76 @@ textbox[type="number"]
 {
 	width: 4em;
 }
+
+menulist
+{
+	height: 1em;
+	margin: 2px;
+}
+.menulist-label-box
+{
+	margin: -1px 0 0 0;
+}
+#requirementsGroup > vbox
+{
+	display: grid;
+}
+#restrictPunctuation
+{
+	margin: 0 0 0 2.5em;
+	display: flex;
+	max-width: 15em;
+	flex-wrap: wrap;
+}
+#restrictPunctuation > checkbox
+{
+	-moz-appearance: none;
+	cursor: pointer;
+	padding: 0 0.1em 0 0;
+	margin: 0;
+	width: 1.5em;
+	height: 1.5em;
+	text-align: center;
+	font-family: "Fira Mono", "DejaVu Sans Mono", Menlo, Consolas, "Liberation Mono", Monaco, "Lucida Console", monospace;
+	color: gray;
+	outline: 1px solid gray;
+	background-color: silver;
+	box-shadow: 0 0 0.5em gray;
+}
+#restrictPunctuation > checkbox:not([disabled]):hover
+{
+	background-color: DimGray;
+	color: white;
+}
+#restrictPunctuation > checkbox:not([disabled])[checked]:hover
+{
+	background-color: #69B955;
+	color: white;
+}
+#restrictPunctuation > checkbox .checkbox-check
+{
+	display: none;
+}
+
+#restrictPunctuation > checkbox[checked]:not([_checked]),
+#restrictPunctuation > checkbox[_checked="true"]
+{
+	background-color: #9EE09E;
+	color: black;
+	box-shadow: 0 0 0.5em silver;
+}
+#restrictPunctuation[disabled] > checkbox
+{
+	opacity: 0.5;
+	cursor: initial;
+	pointer-events: none;
+}
+[disabled="true"]
+{
+	color: GrayText;
+}
+#pshOpt_requireBox,
+#pshOpt_hashWordSizeBox
+{
+	margin-left: 2em;
+}

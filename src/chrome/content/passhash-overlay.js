@@ -38,6 +38,10 @@
 var PassHash =
 {
     markerNumber: 1,
+    bits: {
+    	showMarker: 16,
+    	unmaskMarker: 32
+    },
     phLoopTimer: null,
     options: null,
 
@@ -57,11 +61,21 @@ if (e.type == "load")
 }
 */
 //log("onLoad", e);
-       this.options = PassHashCommon.loadOptions();
+			if (!this.options)
+       	this.options = PassHashCommon.loadOptions();
+//       this.checkMarkerOnload({originalTarget: document});
        if (this.options.showMarker || this.options.unmaskMarker)
-            this.addMarkers(window.content, this.options.showMarker, this.options.unmaskMarker);
+       {
+//            this.addMarkers(window.content, this.options.showMarker, this.options.unmaskMarker);
+					let that = this;
+					setTimeout(function()
+					{
+						that.addMarkers(window.content, that.options.showMarker, that.options.unmaskMarker);
+					}, 0);
+			}
 
-				if (e.type != "load")
+
+				if (!e || e.type != "load")
 					return;        
 
         document.getElementById("contentAreaContextMenu").
@@ -123,7 +137,7 @@ if (e.type == "load")
 
 			if (node.hasAttribute("autocomplete"))
 			{
-				if (!node._PassHashAutocomplete)
+				if (!("_PassHashAutocomplete" in node))
 					node._PassHashAutocomplete = node.getAttribute("autocomplete");
 
 				node.setAttribute("autocomplete", on ? "on" : node._PassHashAutocomplete);
@@ -139,7 +153,7 @@ if (e.type == "load")
 			{
 				PassHash.autocompleteOn(node, PassHash.options.autocomplete);
 			}
-			if (!node || node.tagName != "INPUT" || node.getAttribute("type") != "password" || node._phInited || !PassHashCommon.isVisible(node) || node.hasAttribute("phNoMarkers"))
+			if (!node || node.tagName != "INPUT" || node.getAttribute("type") != "password" || node._phInited == (this.options.markerPosition | this.bits.showMarker | this.bits.unmaskMarker) || !PassHashCommon.isVisible(node) || node.hasAttribute("phNoMarkers"))
 				return;
 
 			PassHash.attachMarkers(node, dialogButton, unmaskButton);
@@ -222,13 +236,24 @@ if (e.type == "load")
 		
     attachMarkers: function(field, dialogButton, unmaskButton, force)
     {
-    	if (field._phInited && !force)
+    	let bits = this.options.markerPosition | this.bits.showMarker | this.bits.unmaskMarker;
+    	if (field._phInited == bits && !force)
     		return;
 
 			let doc = field.ownerDocument,
 					win = doc.defaultView;
 
-    	field._phInited = true;
+			if (field._phInited && field._phInited != bits)
+			{
+				let node = doc.getElementById("passhashMarkers" + field.getAttribute("passHashMarkers"));
+				if (node)
+				{
+					node.parentNode.removeChild(node);
+					if (field.__style)
+						field.setAttribute("style", field.__style);
+				}
+			}
+    	field._phInited = this.options.markerPosition | this.bits.showMarker | this.bits.unmaskMarker;
         // Prevent reprocessing this field
 //        field.setAttribute("phNoMarkers", true);
         if (unmaskButton || dialogButton)
@@ -236,8 +261,9 @@ if (e.type == "load")
             var tableNode = doc.createElement("TABLE"),
             		trNode = doc.createElement("TR"),
             		setStyle = this.setStyle,
-            		display = this.options.markerPosition == PassHashCommon.phCore.LEFTCOMPACT || this.options.markerPosition == PassHashCommon.phCore.RIGHTCOMPACT ? "block" : "table";
+            		display = this.options.markerPosition & PassHashCommon.phCore.COMPACT ? "block" : "table";
 
+						field.__style = field.getAttribute("style");
             tableNode.id = "passhashMarkers" + this.markerNumber;
             setStyle(tableNode, {
 //            	"max-width": (this.options.markerSize + 2) + "px",
@@ -337,12 +363,12 @@ if (e.type == "load")
 								let top = 2 + rectField.bottom - rectTable.top,
 										left = rectField.left - rectTable.left;
 
-								if (rectField.width > rectTable.width + 20 && PassHash.options.markerPosition != PassHashCommon.phCore.BOTTOM)
+								if (rectField.width > rectTable.width + 20 && !(PassHash.options.markerPosition & PassHashCommon.phCore.BOTTOM))
 								{
 									let rf = rectField,
 											rt = rectTable;
 
-									setStyle(field, "padding-" +  (PassHash.options.markerPosition == PassHashCommon.phCore.LEFT || PassHash.options.markerPosition == PassHashCommon.phCore.LEFTCOMPACT ? "left" : "right"), (rectTable.width + 4) + "px");
+									setStyle(field, "padding-" +  (PassHash.options.markerPosition & PassHashCommon.phCore.LEFT ? "left" : "right"), (rectTable.width + 4) + "px");
 									rectField = field.getBoundingClientRect();
 									if (rectField.width > rf.width)
 									{
@@ -352,7 +378,7 @@ if (e.type == "load")
 									rectField = field.getBoundingClientRect();
 									rectTable = tableNode.getBoundingClientRect();
 									top = (rectField.bottom - rectTable.top) - (rectField.height/2 + rectTable.height/2);
-									if (PassHash.options.markerPosition == PassHashCommon.phCore.LEFT || PassHash.options.markerPosition == PassHashCommon.phCore.LEFTCOMPACT)
+									if (PassHash.options.markerPosition & PassHashCommon.phCore.LEFT)
 									{
 										left = rectField.left - rectTable.left + 3;
 									}
@@ -598,9 +624,12 @@ if (e.type == "load")
 		{
 			if (event.originalTarget instanceof HTMLDocument)
 			{
-				var win = event.originalTarget.defaultView;
+				var win = event.originalTarget.defaultView,
+						that = this;
 				if (this.options && (this.options.showMarker || this.options.unmaskMarker))
-						this.addMarkers(win.content, this.options.showMarker, this.options.unmaskMarker);
+				{
+						that.addMarkers(win.content, that.options.showMarker, that.options.unmaskMarker);
+				}
 			}
 		},
 
@@ -614,14 +643,20 @@ if (e.type == "load")
 				return false;   // handled
 			}
 		},
+		intervalLoop: function()
+		{
+			PassHash.onLoad();
+		},
 
 };
 
 window.addEventListener("load",  function(e) { PassHash.onLoad(e); }, true);
 window.addEventListener("unload",  function(e) { PassHash.onUnLoad(e); }, true);
-window.addEventListener("focus", function(e) { PassHash.onLoad(e); }, true);
+//window.addEventListener("focus", function(e) { PassHash.onLoad(e); }, true);
+PassHash._interval = setInterval(PassHash.intervalLoop, 3000);
 //window.addEventListener("DOMContentLoaded", function(e) { PassHash.onLoad(e); }, true);
-
+//window.addEventListener("DOMAttrModified", function(e) { log(e);PassHash.onLoad(e); }, true);
+//gBrowser.addEventListener("DOMNodeInserted", function(e) { log(e);PassHash.onLoad(e); }, true);
 
 
 

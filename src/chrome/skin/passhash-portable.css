@@ -109,3 +109,50 @@ textarea
 	font-weight: normal;
 	border: 1px solid;
 }
+
+#restrictPunctuation
+{
+	margin: 0 0 0 1.75em;
+	display: grid;
+	grid-template-columns: repeat(10, 1.2em);
+}
+label.rp
+{
+	cursor: pointer;
+	padding: 0;
+	margin: -1px 0 0 0;
+	width: 1.2em;
+	height: 1.2em;
+	text-align: center;
+	font-family: "Fira Mono", "DejaVu Sans Mono", Menlo, Consolas, "Liberation Mono", Monaco, "Lucida Console", monospace;
+	color: dimgrey;
+	border: 1px solid grey;
+	background-color: silver;
+	line-height: 1.2em;
+	vertical-align: middle;
+}
+input.rp
+{
+	display: none;
+}
+label.rp:not([disabled]):hover
+{
+	background-color: DimGray;
+	color: white;
+}
+label.rp[checked]:not([disabled]):hover
+{
+	background-color: #69B955;
+	color: white;
+}
+label.rp[checked]
+{
+	background-color: #9EE09E;
+	color: black;
+}
+#restrictPunctuation[disabled] label
+{
+	opacity: 0.5;
+	cursor: initial;
+	pointer-events: none;
+}

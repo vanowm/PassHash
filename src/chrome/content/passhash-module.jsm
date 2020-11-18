@@ -1,11 +1,10 @@
 const EXPORTED_SYMBOLS = ["phCore"],
 			PREF = "extensions.passhash.",
 			{classes: Cc, interfaces: Ci, utils: Cu} = Components,
-			BOTTOM = 0,
-			LEFT = 1,
-			RIGHT = 2,
-			LEFTCOMPACT = 3;
-			RIGHTCOMPACT = 4;
+			BOTTOM = 1,
+			LEFT = 2,
+			RIGHT = 4,
+			COMPACT = 8;
 
 Cu.import("resource://gre/modules/Console.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
@@ -19,8 +18,7 @@ var phCore = {
 	BOTTOM: BOTTOM,
 	RIGHT: RIGHT,
 	LEFT: LEFT,
-	LEFTCOMPACT: LEFTCOMPACT,
-	RIGHTCOMPACT: RIGHTCOMPACT,
+	COMPACT: COMPACT,
 	_prefs: Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefService).getBranch(PREF),
 	loginManager: Cc["@mozilla.org/login-manager;1"].getService(Ci.nsILoginManager),
 	optsDefault:
@@ -29,9 +27,17 @@ var phCore = {
 		dblClick:							{default: true},
 		guessFullDomain:			{default: false},
 		guessSiteTag:					{default: true},
-		hashWordSize:					{default: 26, min: 1, max: 100},
+		hashWordSize:					{default: 26, min: 4, max: 100},
 		lastOptions:					{default: ""},
-		markerPosition:				{default: BOTTOM, min: 0, max: 4},
+		markerPosition:				{default: BOTTOM,
+														filter: function(i)
+														{
+															i = ~~i
+															if (i < 1 || i > 12 || ((i & BOTTOM ? 1 : 0) + (i & LEFT ? 1 : 0) + (i & RIGHT ? 1 : 0)) != 1)
+																return BOTTOM;
+															return i;
+														}
+													},
 		markerSize:						{default: 12, min: 4, max: 20},
 		masterKeyAddTag:			{default: false},
 		middleClick:					{default: true},
@@ -41,6 +47,7 @@ var phCore = {
 		requireMixedCase:			{default: true},
 		requirePunctuation:		{default: true},
 		restoreLast:					{default: false},
+		restrictPunctuation:	{default: 1},
 		revealHashWord:				{default: false},
 		revealSiteTag:				{default: true},
 		sha3:									{default: false},
@@ -547,15 +554,39 @@ log(e);
 
 	optionBits:
 	{
-		hashWordSize: 63,
+		hashWordSize: 127,
 		requireDigit: 128,
 		requirePunctuation: 256,
 		requireMixedCase: 1024,
 		restrictSpecial: 2048,
 		restrictDigits: 4096,
-		sha3: 8192
+		sha3: 8192,
+		restrictPunctuation: 2147483647, //30 characters bitwise stored as number after decimal point of options value, starting at bit2.
+																		 //bit1 used as identifier of new default 30 charcters
+		restrictPunctuationLegacy: 65535 //legacy 15 character bitwise after decimal point starting at bit2. Bit1 is unsued.
+	},
+	string2filter(str)
+	{
+		let r = 0;
+		for(let i = 1; i < 31; i++)
+		{
+			if (str.indexOf(String.fromCharCode(32 + i + (i > 15 ? i > 22 ? i > 27 ? 63 : 36 : 10 : 0))) != -1)
+				r |= 1 << i;
+
+		}
+		return r;
 	},
 
+	filter2string(filter)
+	{
+		let r = "";
+		for(let i = 1; i < 31; i++)
+		{
+			if ((filter >> i) & 1)
+				r += String.fromCharCode(32 + i + (i > 15 ? i > 22 ? i > 27 ? 63 : 36 : 10 : 0));
+		}
+		return r;
+	},
 };
 phCore.setDefaultPrefs();
 AddonManager.getAddonByID("passhash@mozilla.wijjo.com", function(addon)
@@ -864,4 +895,4 @@ log(win);
 			}
 		});
 	}
-openConsole();
+//openConsole();

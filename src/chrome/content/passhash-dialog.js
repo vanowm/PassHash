@@ -55,6 +55,7 @@ var PassHash =
 		hashWordSize:        null,
 		sha3:                null,
 		masterKeyAddTag:     null,
+		restrictPunctuation: null,
 		hashWord:						 "",
 		title: document.title,
 		accept: false,
@@ -65,6 +66,7 @@ var PassHash =
 			restrictSpecial: null,
 			restrictDigits: null,
 			hashWordSize: null,
+			restrictPunctuation: null,
 			sha3: null
 		},
 		defaultOptions: {},
@@ -82,7 +84,7 @@ var PassHash =
 				var ctlRestrictDigits     = document.getElementById("digitsOnly");
 				var ctlHashWordSize       = document.getElementById("hashWordSize");
 				var ctlSha3               = document.getElementById("sha3");
-
+				var ctlRestrictPunctuation= document.getElementById("restrictPunctuation");
 				var prefs = PassHashCommon.loadOptions();
 				this.guessSiteTag       = prefs.guessSiteTag;
 				this.rememberSiteTag    = prefs.rememberSiteTag;
@@ -97,8 +99,9 @@ var PassHash =
 				this.restrictDigits     = false;
 				this.hashWordSize       = prefs.hashWordSize;
 				this.sha3               = prefs.sha3;
+				this.restrictPunctuation = prefs.restrictPunctuation;
 				this.masterKeyAddTag    = prefs.masterKeyAddTag;
-
+				
 				if (prefs.restoreLast)
 				{
 					try
@@ -128,7 +131,7 @@ var PassHash =
 				this.masterKeySaved = data[1];
 				this.siteTagSaved = data[0];
 				var strDefOptions = (ctlMasterKey.value ? "" : this.getOptionString());
-				strOptions2 = data[2] || strDefOptions;
+				var strOptions = data[2] || strDefOptions;
 /*
 
 				ctlSiteTag.value = PassHashCommon.loadSecureValue(
@@ -150,7 +153,118 @@ var PassHash =
 				var strDefOptions = (ctlMasterKey.value ? "" : this.getOptionString());
 				var strOptions2 = PassHashCommon.loadSecureValue(true, "options", domain, strDefOptions);
 */
-				this.parseOptionString(strOptions2);
+log(data);
+				Object.assign(this, new PassHashCommon.parseOptionString(strOptions));
+				let that = this,
+						firstCheckbox = 1;
+
+				for (let i = 1; i < 31; i++)
+				{
+					let checkbox = document.createElement("checkbox");
+					checkbox.id = "restrictPunctuation" + i;
+					checkbox.className = "restrictPunctuation";
+					checkbox.setAttribute("tooltiptext", PassHashCommon.punctuation[i-1]);
+					checkbox.setAttribute("label", String.fromCharCode(32 + i + (i > 15 ? i > 22 ? i > 27 ? 63 : 36 : 10 : 0)));
+					if (i > 15)
+						checkbox.className += " extra";
+
+					checkbox.addEventListener("command", function(e)
+					{
+						if (!e.shiftKey || !firstCheckbox)
+							firstCheckbox = i;
+						else if (firstCheckbox && i != firstCheckbox)
+						{
+							for(let c,v,n = i > firstCheckbox ? firstCheckbox+1 : i; n < (i < firstCheckbox ? firstCheckbox : i + 1); n++)
+							{
+								c = document.getElementById("restrictPunctuation" + n),
+								v = document.getElementById("restrictPunctuation" + firstCheckbox).checked;
+								c.checked = v;
+							}
+						}
+						let r = that.restrictPunctuationGet();
+						if (this.checked)
+							r &= ~(1 << i);
+						else
+						{
+							r |= 1 << i;
+							if (r == PassHashCommon.phCore.optionBits.restrictPunctuation - 1)
+							{
+								r = that.restrictPunctuation;
+								this.checked = true;
+							}
+						}
+						if (r == (PassHashCommon.phCore.optionBits.restrictPunctuation ^ PassHashCommon.phCore.optionBits.restrictPunctuationLegacy) && !that._data.restrictPunctuation)
+							r = 0;
+
+						that.restrictPunctuation = r
+						that.update();
+					}, false);
+					if (!(this.restrictPunctuation >> i & 1))
+						if (i <= 15 || (i > 15 && (!data || (data && this.restrictPunctuation))))
+							checkbox.setAttribute("checked", true);
+
+					ctlRestrictPunctuation.appendChild(checkbox);
+				}
+				let first = null, checked, changed, last;
+				document.addEventListener("dragstart", function(e)
+				{
+					first = (e.target.id.match(/^restrictPunctuation([0-9]+)$/)||0)[1] || null;
+					checked = !e.target.checked;
+				}, false);
+
+				ctlRestrictPunctuation.addEventListener("mouseover", function(e)
+				{
+					if (!first)
+						return;
+
+					let id = (e.target.id.match(/^restrictPunctuation([0-9]+)$/) || 0)[1];
+					if (!id)
+						return;
+
+					for(let i = 1; i < 31; i++)
+					{
+						let checkbox = document.getElementById("restrictPunctuation" + i);
+						if ((i < first && i < id) || (i > first && i > id))
+						{
+							checkbox.removeAttribute("_checked");
+							continue;
+						}
+						if (checkbox.getAttribute("_checked") != checked)
+							changed = true;
+
+						checkbox.setAttribute("_checked", checked);
+					}
+					last = e.target;
+				}, false);
+
+				document.addEventListener("mouseup", function(e)
+				{
+					for(let i = 1; i < 31; i++)
+					{
+						let obj = document.getElementById("restrictPunctuation" + i),
+								c = obj.getAttribute("_checked"),
+								changed = false;
+
+						if (c !== null && c !== "")
+						{
+							obj.removeAttribute("_checked");
+							obj.checked = c == "true";
+							changed = true;
+						}
+					}
+					if (changed)
+					{
+						let r = that.restrictPunctuationGet();
+						if (r == PassHashCommon.phCore.optionBits.restrictPunctuation - 1)
+						{
+							last.checked = true;
+							r = that.restrictPunctuationGet() | 1;
+						}
+						that.restrictPunctuation = r
+						that.update();
+					}
+					first = changed = null;
+				}, false);
 				// This is the only time we write to the option controls.  Otherwise we
 				// just react to their state changes.
 				ctlRequireDigit.checked        = this.requireDigit;
@@ -207,19 +321,33 @@ this.siteTagInitial = ctlSiteTag.value;
 			window.focus();
 		},//onLoad()
 
+		restrictPunctuationGet(f)
+		{
+			let r = 0;
+			for (let i = 1; i < 31; i++)
+			{
+				if (!document.getElementById("restrictPunctuation" + i).checked)
+					r |= 1 << i;
+			}
+			return r
+		},
+
 		onAccept: function(e)
 		{
-log(this.accept, e);
 				if (!this.update())
 					return false
 this.accept = true;
+
+				let r = this.restrictPunctuationGet();
+				if (r == (PassHashCommon.phCore.optionBits.restrictPunctuation ^ PassHashCommon.phCore.optionBits.restrictPunctuationLegacy))
+					this.restrictPunctuation = 0;
+
 					let domain = PassHashCommon.getDomain(this.arguments[0].input),
 							strOptions = this.getOptionString(),
 							ctlMasterKey = document.getElementById("master-key"),
 							ctlSiteTag = document.getElementById("site-tag"),
 							siteTag = this.rememberSiteTag ? ctlSiteTag.value : "",
 							masterKey = this.rememberMasterKey ? ctlMasterKey.value : "";
-log(this._data);
 //					if (siteTag != this._data[0] || masterKey != this._data[1] || strOptions != this._data[2])
 //					if ((this._data.length && (siteTag != this._data[0] || masterKey != this._data[1])) || this.masterKeyInitial != ctlMasterKey.value || this.siteTagInitial != ctlSiteTag.value)
 					if ((this._data.length && this._data.toString() != [siteTag, masterKey, strOptions].toString()) || this.masterKeyInitial != ctlMasterKey.value || this.siteTagInitial != ctlSiteTag.value)
@@ -253,7 +381,6 @@ log(this._data);
 			if (!this.accept)
 			{
 				this.arguments[0].callback(null);
-log(this.accept, e);
 			}
 
 
@@ -394,6 +521,7 @@ log(this.accept, e);
 				ctlSiteTag.classList.toggle("error", (!ctlSiteTag.value));
 				document.getElementById("site-tag-bump").disabled = (!ctlSiteTag.value);
 				document.getElementById("copy").disabled = r;
+				document.documentElement.getButton("accept").disabled = r;
 				if (r)
 				{
 					this.setHashWord("");
@@ -401,19 +529,22 @@ log(this.accept, e);
 				}
 				// Change the hash word and determine whether or not it was modified.
 				var hashWordOrig = this.hashWord;
-				this.setHashWord(PassHashCommon.generateHashWord(
-								ctlSiteTag.value,
-								ctlMasterKey.value,
-								this.hashWordSize,
-								this.requireDigit,
-								this.requirePunctuation,
-								this.requireMixedCase,
-								this.restrictSpecial,
-								this.restrictDigits,
-								this.sha3));
+				this.setHashWord(PassHashCommon.generateHashWord({
+					siteTag:  ctlSiteTag.value,
+					masterKey: ctlMasterKey.value,
+					hashWordSize: this.hashWordSize,
+					requireDigit: this.requireDigit,
+					requirePunctuation: this.requirePunctuation,
+					requireMixedCase: this.requireMixedCase,
+					restrictSpecial: this.restrictSpecial,
+					restrictDigits: this.restrictDigits,
+					sha3: this.sha3,
+					restrictPunctuation: this.restrictPunctuation
+				}));
 
 				if ((this.hashWordSaved || typeof(this.hashWordSaved) == "undefined"))
 					ctlHashWord.classList.toggle("saved", ((typeof(this.hashWordSaved) == "undefined" || this.hashWordSaved == this.hashWord) && this.masterKeySaved === ctlMasterKey.value && this.siteTagSaved === ctlSiteTag.value));
+
 				if (this.hashWord != hashWordOrig)
 						return 3;   // It was modified
 
@@ -467,6 +598,11 @@ log(this.accept, e);
 								this.restrictDigits;
 				document.getElementById("requirePunctuation").disabled =
 								(this.restrictSpecial || this.restrictDigits);
+				if (this.restrictSpecial || this.restrictDigits || !this.requirePunctuation)
+					document.getElementById("restrictPunctuation").setAttribute("disabled", "");
+				else
+					document.getElementById("restrictPunctuation").removeAttribute("disabled");
+
 				document.getElementById("requireMixedCase").disabled =
 								this.restrictDigits;
 				document.getElementById("noSpecial").disabled =
@@ -494,7 +630,6 @@ log(this.accept, e);
 
 				if (focus === false)
 					return true;
-
 				switch (r)
 				{
 						case 1:
@@ -511,39 +646,20 @@ log(this.accept, e);
 				return true;
 		},
 
-		parseOptionString: function(s)
-		{
-			if (typeof(s) == "number")
-			{
-				for(let i in PassHashCommon.phCore.optionBits)
-				{
-					if (i == "hashWordSize")
-						this[i] = s & PassHashCommon.phCore.optionBits[i];
-					else
-						this[i] = s & PassHashCommon.phCore.optionBits[i] ? true : false;
-				}
-			}
-			else
-			{
-				this.requireDigit       = (s.search(/d/i) >= 0);
-				this.requirePunctuation = (s.search(/p/i) >= 0);
-				this.requireMixedCase   = (s.search(/m/i) >= 0);
-				this.restrictSpecial    = (s.search(/r/i) >= 0);
-				this.restrictDigits     = (s.search(/g/i) >= 0);
-				this.sha3               = (s.search(/s/i) >= 0);
-				var sizeMatch = s.match(/[0-9]+/);
-				this.hashWordSize = (sizeMatch != null && sizeMatch.length > 0
-																		? parseInt(sizeMatch[0])
-																		: 8);
-			}
-		},
-
 		getOptionString: function()
 		{
 			let b = ~~this.hashWordSize;
 			for(let i in PassHashCommon.phCore.optionBits)
 			{
-				if (i != "hashWordSize" && this[i])
+				if (i == "restrictPunctuationLegacy")
+					continue;
+
+				if (i == "restrictPunctuation")
+				{
+					if (this[i])
+						b += parseFloat("0." + (this[i] | 1));
+				}
+				else if (i != "hashWordSize" && this[i])
 					b += PassHashCommon.phCore.optionBits[i];
 			}
 			return b;

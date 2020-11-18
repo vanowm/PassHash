@@ -195,6 +195,8 @@ log(data);
 						}
 						if (r == (PassHashCommon.phCore.optionBits.restrictPunctuation ^ PassHashCommon.phCore.optionBits.restrictPunctuationLegacy) && !that._data.restrictPunctuation)
 							r = 0;
+						else if (r != PassHashCommon.phCore.optionBits.restrictPunctuationLegacy)
+							r |= 1;
 
 						that.restrictPunctuation = r
 						that.update();
@@ -260,6 +262,9 @@ log(data);
 							last.checked = true;
 							r = that.restrictPunctuationGet() | 1;
 						}
+						else if (r != PassHashCommon.phCore.optionBits.restrictPunctuationLegacy)
+							r |= 1;
+
 						that.restrictPunctuation = r
 						that.update();
 					}
@@ -329,25 +334,29 @@ this.siteTagInitial = ctlSiteTag.value;
 				if (!document.getElementById("restrictPunctuation" + i).checked)
 					r |= 1 << i;
 			}
+
 			return r
 		},
 
 		onAccept: function(e)
 		{
-				if (!this.update())
-					return false
+			if (!this.update())
+				return false
 this.accept = true;
 
-				let r = this.restrictPunctuationGet();
-				if (r == (PassHashCommon.phCore.optionBits.restrictPunctuation ^ PassHashCommon.phCore.optionBits.restrictPunctuationLegacy))
-					this.restrictPunctuation = 0;
+			let r = this.restrictPunctuationGet();
 
-					let domain = PassHashCommon.getDomain(this.arguments[0].input),
-							strOptions = this.getOptionString(),
-							ctlMasterKey = document.getElementById("master-key"),
-							ctlSiteTag = document.getElementById("site-tag"),
-							siteTag = this.rememberSiteTag ? ctlSiteTag.value : "",
-							masterKey = this.rememberMasterKey ? ctlMasterKey.value : "";
+			if (r == (PassHashCommon.phCore.optionBits.restrictPunctuation ^ PassHashCommon.phCore.optionBits.restrictPunctuationLegacy))
+				this.restrictPunctuation = 0;
+			else
+				this.restrictPunctuation = r | 1;
+
+			let domain = PassHashCommon.getDomain(this.arguments[0].input),
+					strOptions = this.getOptionString(),
+					ctlMasterKey = document.getElementById("master-key"),
+					ctlSiteTag = document.getElementById("site-tag"),
+					siteTag = this.rememberSiteTag ? ctlSiteTag.value : "",
+					masterKey = this.rememberMasterKey ? ctlMasterKey.value : "";
 //					if (siteTag != this._data[0] || masterKey != this._data[1] || strOptions != this._data[2])
 //					if ((this._data.length && (siteTag != this._data[0] || masterKey != this._data[1])) || this.masterKeyInitial != ctlMasterKey.value || this.siteTagInitial != ctlSiteTag.value)
 					if ((this._data.length && this._data.toString() != [siteTag, masterKey, strOptions].toString()) || this.masterKeyInitial != ctlMasterKey.value || this.siteTagInitial != ctlSiteTag.value)
@@ -366,14 +375,14 @@ this.accept = true;
 															document.getElementById("master-key").value);
 					PassHashCommon.saveSecureValue(true, "options", domain, strOptions);
 */
-				for(let i in this.lastOptions)
-				{
-					this.lastOptions[i] = this[i];
-				}
-				PassHashCommon.phCore.pref("lastOptions", JSON.stringify(this.lastOptions));
-				this.arguments[0].output = this.hashWord;
-				this.arguments[0].callback(this.hashWord);
-				return true;
+			for(let i in this.lastOptions)
+			{
+				this.lastOptions[i] = this[i];
+			}
+			PassHashCommon.phCore.pref("lastOptions", JSON.stringify(this.lastOptions));
+			this.arguments[0].output = this.hashWord;
+			this.arguments[0].callback(this.hashWord);
+			return true;
 		},//onAccept()
 
 		onCancel: function(e)

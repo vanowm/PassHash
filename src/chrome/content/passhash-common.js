@@ -237,6 +237,7 @@ var PassHashCommon =
       	{
 					list = PassHashCommon.phCore.filter2string(~~filter ^ PassHashCommon.phCore.optionBits["restrictPunctuation" + (filter ? "" : "Legacy")]);
       	}
+//log(list, filter, filter.toString(2));
         var sHead   = (pos > 0 ? sInput.substring(0, pos) : "");
 //        var sInject = String.fromCharCode(((seed + sInput.charCodeAt(pos)) % cNum) + cStart);
         var sInject = list.substr(((seed + sInput.charCodeAt(pos)) % list.length), 1);

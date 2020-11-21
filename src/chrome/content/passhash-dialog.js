@@ -66,7 +66,7 @@ var PassHash =
 			restrictSpecial: null,
 			restrictDigits: null,
 			hashWordSize: null,
-			restrictPunctuation: null,
+//			restrictPunctuation: null,
 			sha3: null
 		},
 		defaultOptions: {},
@@ -101,7 +101,6 @@ var PassHash =
 				this.sha3               = prefs.sha3;
 				this.restrictPunctuation = prefs.restrictPunctuation;
 				this.masterKeyAddTag    = prefs.masterKeyAddTag;
-				
 				if (prefs.restoreLast)
 				{
 					try
@@ -153,7 +152,7 @@ var PassHash =
 				var strDefOptions = (ctlMasterKey.value ? "" : this.getOptionString());
 				var strOptions2 = PassHashCommon.loadSecureValue(true, "options", domain, strDefOptions);
 */
-log(data);
+//log(data);
 				Object.assign(this, new PassHashCommon.parseOptionString(strOptions));
 				let that = this,
 						firstCheckbox = 1;

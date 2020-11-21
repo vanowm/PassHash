@@ -563,6 +563,7 @@ log(e);
 		sha3: 8192,
 		restrictPunctuation: 2147483647, //30 characters bitwise stored as number after decimal point of options value, starting at bit2.
 																		 //bit1 used as identifier of new default 30 charcters
+																		 //each set bit represents diactivated character
 		restrictPunctuationLegacy: 65535 //legacy 15 character bitwise after decimal point starting at bit2. Bit1 is unsued.
 	},
 	string2filter(str)

@@ -83,10 +83,10 @@
 <!ENTITY pshDlg.copy.accesskey             		"c">
 <!ENTITY pshDlg.settings.label                "Settings">
 <!ENTITY pshDlg.settings.accesskey            "i">
-<!ENTITY pshDlg.sha3.label               		  "SHA3-512 alghoritm">
+<!ENTITY pshDlg.sha3.label               		  "New algorithm">
 <!ENTITY pshDlg.sha3.tooltip             		  "Automatically applied with size 27 and above">
-<!ENTITY pshDlg.sha3.accesskey            		"3">
-<!ENTITY pshOpt.sha3.accesskey             		"3">
+<!ENTITY pshDlg.sha3.accesskey            		"a">
+<!ENTITY pshOpt.sha3.accesskey             		"n">
 <!ENTITY pshOpt.dblClick.label                "Double click opens dialog">
 <!ENTITY pshOpt.dblClick.accesskey            "u">
 <!ENTITY pshOpt.middleClick.label             "Middle click opens dialog">
@@ -101,14 +101,24 @@
 <!ENTITY pshOpt.delete.label                  "Delete saved logins">
 <!ENTITY pshOpt.delete.desc                   "Delete options for websites saved by Password Hasher">
 <!ENTITY pshOpt.markePosition.label           "Markers position">
-<!ENTITY pshOpt.markePosition.1			          "Bottom">
-<!ENTITY pshOpt.markePosition.2     			    "Left">
-<!ENTITY pshOpt.markePosition.4         			"Right">
-<!ENTITY pshOpt.markePosition.9         			"Bottom Compact">
-<!ENTITY pshOpt.markePosition.10         			"Left Compact">
-<!ENTITY pshOpt.markePosition.12         			"Right Compact">
+<!ENTITY pshOpt.markePosition.8     			    "Left">
+<!ENTITY pshOpt.markePosition.9         			"Left Compact">
+<!ENTITY pshOpt.markePosition.4			          "Left Bottom">
+<!ENTITY pshOpt.markePosition.5			          "Left Bottom Compact">
+<!ENTITY pshOpt.markePosition.10         			"Left Outside">
+<!ENTITY pshOpt.markePosition.11         			"Left Outside Compact">
+<!ENTITY pshOpt.markePosition.16         			"Right">
+<!ENTITY pshOpt.markePosition.17         			"Right Compact">
+<!ENTITY pshOpt.markePosition.20		          "Right Bottom">
+<!ENTITY pshOpt.markePosition.21		          "Right Bottom Compact">
+<!ENTITY pshOpt.markePosition.18         			"Right Outside">
+<!ENTITY pshOpt.markePosition.19         			"Right Outside Compact">
 <!ENTITY pshOpt.markeSize.label         			"Marker size">
 <!ENTITY pshOpt.autocomplete.label         		"Force autocomplete">
 <!ENTITY pshOpt.autocomplete.desc         		"Force autocomplete on websites that tries to prevent it.">
 <!ENTITY pshOpt.autocomplete.accesskey     		"c">
 <!ENTITY pshOpt.misc.label         						"Misc.">
+<!ENTITY pshOpt.toolbarButton.label         	"Settings in toolbar button">
+<!ENTITY pshOpt.toolbarButton.desc         		"Add dropdown menu to toolbar button">
+<!ENTITY pshOpt.toolbarButton.accesskey     	"b">
+<!ENTITY pshOpt.save.label                  	"Save">

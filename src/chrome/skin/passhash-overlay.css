@@ -1,6 +1,6 @@
 .passhash_marker
 {
-	border: thin solid #80c080;
+	border: thick solid #80c080;
 	background-color: #eeffee;
 	margin: 0 1px;
 	padding: 0;
@@ -10,7 +10,6 @@
 	min-width: 12px;
 	text-align: center;
 	vertical-align: middle;
-	
 }
 td{
 	background-color: ass;
@@ -19,4 +18,23 @@ td{
 .passhash-button
 {
 	list-style-image: url('chrome://passhash/skin/logo.png');
+}
+
+.passHashMarkers
+{
+}
+
+.passHashMarker,
+.passHashUnmask
+{
+	border: thick solid #80c080;
+	background-color: #eeffee;
+	margin: 0 1px;
+	padding: 0;
+	font: 12px serif;
+	color: #609060;
+	cursor: pointer;
+	min-width: 12px;
+	text-align: center;
+	vertical-align: middle;
 }

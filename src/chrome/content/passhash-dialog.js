@@ -59,6 +59,7 @@ var PassHash =
 		hashWord:						 "",
 		title: document.title,
 		accept: false,
+		save: true,
 		lastOptions: {
 			requireDigit: null,
 			requirePunctuation: null,
@@ -74,217 +75,220 @@ var PassHash =
 		onLoad: function()
 		{
 			this.arguments = window.arguments;
-				document.title = this.title + " v" + PassHashCommon.phCore.addon.version;
-				var ctlSiteTag            = document.getElementById("site-tag");
-				var ctlMasterKey          = document.getElementById("master-key");
-				var ctlRequireDigit       = document.getElementById("requireDigit");
-				var ctlRequirePunctuation = document.getElementById("requirePunctuation");
-				var ctlRequireMixedCase   = document.getElementById("requireMixedCase");
-				var ctlRestrictSpecial    = document.getElementById("noSpecial");
-				var ctlRestrictDigits     = document.getElementById("digitsOnly");
-				var ctlHashWordSize       = document.getElementById("hashWordSize");
-				var ctlSha3               = document.getElementById("sha3");
-				var ctlRestrictPunctuation= document.getElementById("restrictPunctuation");
-				var prefs = PassHashCommon.loadOptions();
-				this.guessSiteTag       = prefs.guessSiteTag;
-				this.rememberSiteTag    = prefs.rememberSiteTag;
-				this.rememberMasterKey  = prefs.rememberMasterKey;
-				this.revealSiteTag      = prefs.revealSiteTag;
-				this.revealHashWord     = prefs.revealHashWord;
-				this.guessFullDomain    = prefs.guessFullDomain;
-				this.requireDigit       = prefs.requireDigit;
-				this.requirePunctuation = prefs.requirePunctuation;
-				this.requireMixedCase   = prefs.requireMixedCase;
-				this.restrictSpecial    = false;
-				this.restrictDigits     = false;
-				this.hashWordSize       = prefs.hashWordSize;
-				this.sha3               = prefs.sha3;
-				this.restrictPunctuation = prefs.restrictPunctuation;
-				this.masterKeyAddTag    = prefs.masterKeyAddTag;
-				if (prefs.restoreLast)
-				{
-					try
-					{
-						let opts = JSON.parse(prefs.lastOptions);
-						for(let i in opts)
-						{
-							if (i in this.lastOptions)
-							{
-								this[i] = opts[i];
-								this.lastOptions[i] = opts[i];
-							}
-						}
-					}catch(e){console.log(e)};
-				}
-				this.onUnmask();
-				var defaultSiteTag = "";
-				var domain = PassHashCommon.getDomain(window.arguments[0].input);
-				var defaultSiteTag = "";
-				if (this.guessSiteTag && domain != null)
-						defaultSiteTag = (this.guessFullDomain || PassHashCommon.isIP(domain) ? domain : domain.split(".")[0]);
+			let ctlAccept = document.documentElement.getButton("accept");
+			ctlAccept.parentNode.insertBefore(document.getElementById("save"), ctlAccept);
 
-				let data = PassHashCommon.phCore.loadSecureValue(domain);
-				this._data = data;
-				ctlSiteTag.value = this.rememberSiteTag ? data[0] || defaultSiteTag : defaultSiteTag;
-				ctlMasterKey.value = this.rememberMasterKey ? data[1] || "" : "";
-				this.masterKeySaved = data[1];
-				this.siteTagSaved = data[0];
-				var strDefOptions = (ctlMasterKey.value ? "" : this.getOptionString());
-				var strOptions = data[2] || strDefOptions;
+			document.title = this.title + " v" + PassHashCommon.phCore.addon.version;
+			var ctlSiteTag            = document.getElementById("site-tag");
+			var ctlMasterKey          = document.getElementById("master-key");
+			var ctlRequireDigit       = document.getElementById("requireDigit");
+			var ctlRequirePunctuation = document.getElementById("requirePunctuation");
+			var ctlRequireMixedCase   = document.getElementById("requireMixedCase");
+			var ctlRestrictSpecial    = document.getElementById("noSpecial");
+			var ctlRestrictDigits     = document.getElementById("digitsOnly");
+			var ctlHashWordSize       = document.getElementById("hashWordSize");
+			var ctlSha3               = document.getElementById("sha3");
+			var ctlRestrictPunctuation= document.getElementById("restrictPunctuation");
+			var prefs = PassHashCommon.loadOptions();
+			this.guessSiteTag       = prefs.guessSiteTag;
+			this.rememberSiteTag    = prefs.rememberSiteTag;
+			this.rememberMasterKey  = prefs.rememberMasterKey;
+			this.revealSiteTag      = prefs.revealSiteTag;
+			this.revealHashWord     = prefs.revealHashWord;
+			this.guessFullDomain    = prefs.guessFullDomain;
+			this.requireDigit       = prefs.requireDigit;
+			this.requirePunctuation = prefs.requirePunctuation;
+			this.requireMixedCase   = prefs.requireMixedCase;
+			this.restrictSpecial    = false;
+			this.restrictDigits     = false;
+			this.hashWordSize       = prefs.hashWordSize;
+			this.sha3               = prefs.sha3;
+			this.restrictPunctuation = prefs.restrictPunctuation;
+			this.masterKeyAddTag    = prefs.masterKeyAddTag;
+			if (prefs.restoreLast)
+			{
+				try
+				{
+					let opts = JSON.parse(prefs.lastOptions);
+					for(let i in opts)
+					{
+						if (i in this.lastOptions)
+						{
+							this[i] = opts[i];
+							this.lastOptions[i] = opts[i];
+						}
+					}
+				}catch(e){console.log(e)};
+			}
+			this.onUnmask();
+			var defaultSiteTag = "";
+			var domain = PassHashCommon.getDomain(window.arguments[0].input);
+			var defaultSiteTag = "";
+			if (this.guessSiteTag && domain != null)
+					defaultSiteTag = (this.guessFullDomain || PassHashCommon.isIP(domain) ? domain : domain.split(".")[0]);
+
+			let data = PassHashCommon.phCore.loadSecureValue(domain);
+			this._data = data;
+			ctlSiteTag.value = this.rememberSiteTag ? data[0] || defaultSiteTag : defaultSiteTag;
+			ctlMasterKey.value = this.rememberMasterKey ? data[1] || "" : "";
+			this.masterKeySaved = data[1];
+			this.siteTagSaved = data[0];
+			var strDefOptions = (ctlMasterKey.value ? "" : this.getOptionString());
+			var strOptions = data[2] || strDefOptions;
 /*
 
-				ctlSiteTag.value = PassHashCommon.loadSecureValue(
-																this.rememberSiteTag,
-																"site-tag",
-																domain,
-																defaultSiteTag);
-				ctlMasterKey.value = PassHashCommon.loadSecureValue(
-																this.rememberMasterKey,
-																"master-key",
-																domain,
-																"");
+			ctlSiteTag.value = PassHashCommon.loadSecureValue(
+															this.rememberSiteTag,
+															"site-tag",
+															domain,
+															defaultSiteTag);
+			ctlMasterKey.value = PassHashCommon.loadSecureValue(
+															this.rememberMasterKey,
+															"master-key",
+															domain,
+															"");
 
-				// Assume if there's a master key present without an options string
-				// that we're on a site that was last accessed under an older version
-				// of this extension, i.e. before hash word options were supported.  If
-				// so, force it to start with cleared options for backward
-				// compatibility.  Otherwise use the preferences as the default.
-				var strDefOptions = (ctlMasterKey.value ? "" : this.getOptionString());
-				var strOptions2 = PassHashCommon.loadSecureValue(true, "options", domain, strDefOptions);
+			// Assume if there's a master key present without an options string
+			// that we're on a site that was last accessed under an older version
+			// of this extension, i.e. before hash word options were supported.  If
+			// so, force it to start with cleared options for backward
+			// compatibility.  Otherwise use the preferences as the default.
+			var strDefOptions = (ctlMasterKey.value ? "" : this.getOptionString());
+			var strOptions2 = PassHashCommon.loadSecureValue(true, "options", domain, strDefOptions);
 */
 //log(data);
-				Object.assign(this, new PassHashCommon.parseOptionString(strOptions));
-				let that = this,
-						firstCheckbox = 1;
+			Object.assign(this, new PassHashCommon.parseOptionString(strOptions));
+			let that = this,
+					firstCheckbox = 1;
 
-				for (let i = 1; i < 31; i++)
+			for (let i = 1; i < 31; i++)
+			{
+				let checkbox = document.createElement("checkbox");
+				checkbox.id = "restrictPunctuation" + i;
+				checkbox.className = "restrictPunctuation";
+				checkbox.setAttribute("tooltiptext", PassHashCommon.punctuation[i-1]);
+				checkbox.setAttribute("label", String.fromCharCode(32 + i + (i > 15 ? i > 22 ? i > 27 ? 63 : 36 : 10 : 0)));
+				if (i > 15)
+					checkbox.className += " extra";
+
+				checkbox.addEventListener("command", function(e)
 				{
-					let checkbox = document.createElement("checkbox");
-					checkbox.id = "restrictPunctuation" + i;
-					checkbox.className = "restrictPunctuation";
-					checkbox.setAttribute("tooltiptext", PassHashCommon.punctuation[i-1]);
-					checkbox.setAttribute("label", String.fromCharCode(32 + i + (i > 15 ? i > 22 ? i > 27 ? 63 : 36 : 10 : 0)));
-					if (i > 15)
-						checkbox.className += " extra";
-
-					checkbox.addEventListener("command", function(e)
+					if (!e.shiftKey || !firstCheckbox)
+						firstCheckbox = i;
+					else if (firstCheckbox && i != firstCheckbox)
 					{
-						if (!e.shiftKey || !firstCheckbox)
-							firstCheckbox = i;
-						else if (firstCheckbox && i != firstCheckbox)
+						for(let c,v,n = i > firstCheckbox ? firstCheckbox+1 : i; n < (i < firstCheckbox ? firstCheckbox : i + 1); n++)
 						{
-							for(let c,v,n = i > firstCheckbox ? firstCheckbox+1 : i; n < (i < firstCheckbox ? firstCheckbox : i + 1); n++)
-							{
-								c = document.getElementById("restrictPunctuation" + n),
-								v = document.getElementById("restrictPunctuation" + firstCheckbox).checked;
-								c.checked = v;
-							}
-						}
-						let r = that.restrictPunctuationGet();
-						if (this.checked)
-							r &= ~(1 << i);
-						else
-						{
-							r |= 1 << i;
-							if (r == PassHashCommon.phCore.optionBits.restrictPunctuation - 1)
-							{
-								r = that.restrictPunctuation;
-								this.checked = true;
-							}
-						}
-						if (r == (PassHashCommon.phCore.optionBits.restrictPunctuation ^ PassHashCommon.phCore.optionBits.restrictPunctuationLegacy) && !that._data.restrictPunctuation)
-							r = 0;
-						else if (r != PassHashCommon.phCore.optionBits.restrictPunctuationLegacy)
-							r |= 1;
-
-						that.restrictPunctuation = r
-						that.update();
-					}, false);
-					if (!(this.restrictPunctuation >> i & 1))
-						if (i <= 15 || (i > 15 && (!data || (data && this.restrictPunctuation))))
-							checkbox.setAttribute("checked", true);
-
-					ctlRestrictPunctuation.appendChild(checkbox);
-				}
-				let first = null, checked, changed, last;
-				document.addEventListener("dragstart", function(e)
-				{
-					first = (e.target.id.match(/^restrictPunctuation([0-9]+)$/)||0)[1] || null;
-					checked = !e.target.checked;
-				}, false);
-
-				ctlRestrictPunctuation.addEventListener("mouseover", function(e)
-				{
-					if (!first)
-						return;
-
-					let id = (e.target.id.match(/^restrictPunctuation([0-9]+)$/) || 0)[1];
-					if (!id)
-						return;
-
-					for(let i = 1; i < 31; i++)
-					{
-						let checkbox = document.getElementById("restrictPunctuation" + i);
-						if ((i < first && i < id) || (i > first && i > id))
-						{
-							checkbox.removeAttribute("_checked");
-							continue;
-						}
-						if (checkbox.getAttribute("_checked") != checked)
-							changed = true;
-
-						checkbox.setAttribute("_checked", checked);
-					}
-					last = e.target;
-				}, false);
-
-				document.addEventListener("mouseup", function(e)
-				{
-					for(let i = 1; i < 31; i++)
-					{
-						let obj = document.getElementById("restrictPunctuation" + i),
-								c = obj.getAttribute("_checked"),
-								changed = false;
-
-						if (c !== null && c !== "")
-						{
-							obj.removeAttribute("_checked");
-							obj.checked = c == "true";
-							changed = true;
+							c = document.getElementById("restrictPunctuation" + n),
+							v = document.getElementById("restrictPunctuation" + firstCheckbox).checked;
+							c.checked = v;
 						}
 					}
-					if (changed)
+					let r = that.restrictPunctuationGet();
+					if (this.checked)
+						r &= ~(1 << i);
+					else
 					{
-						let r = that.restrictPunctuationGet();
+						r |= 1 << i;
 						if (r == PassHashCommon.phCore.optionBits.restrictPunctuation - 1)
 						{
-							last.checked = true;
-							r = that.restrictPunctuationGet() | 1;
+							r = that.restrictPunctuation;
+							this.checked = true;
 						}
-						else if (r != PassHashCommon.phCore.optionBits.restrictPunctuationLegacy)
-							r |= 1;
-
-						that.restrictPunctuation = r
-						that.update();
 					}
-					first = changed = null;
+					if (r == (PassHashCommon.phCore.optionBits.restrictPunctuation ^ PassHashCommon.phCore.optionBits.restrictPunctuationLegacy) && !that._data.restrictPunctuation)
+						r = 0;
+					else if (r != PassHashCommon.phCore.optionBits.restrictPunctuationLegacy)
+						r |= 1;
+
+					that.restrictPunctuation = r
+					that.update();
 				}, false);
-				// This is the only time we write to the option controls.  Otherwise we
-				// just react to their state changes.
-				ctlRequireDigit.checked        = this.requireDigit;
-				ctlRequirePunctuation.checked  = this.requirePunctuation;
-				ctlRequireMixedCase.checked    = this.requireMixedCase;
-				ctlRestrictSpecial.checked     = this.restrictSpecial;
-				ctlRestrictDigits.checked      = this.restrictDigits;
-				ctlSha3.checked                = this.sha3;
-				this.updateCheckboxes();
+				if (!(this.restrictPunctuation >> i & 1))
+					if (i <= 15 || (i > 15 && (!data || (data && this.restrictPunctuation))))
+						checkbox.setAttribute("checked", true);
 
-				ctlHashWordSize.value = this.hashWordSize;
+				ctlRestrictPunctuation.appendChild(checkbox);
+			}
+			let first = null, checked, changed, last;
+			document.addEventListener("dragstart", function(e)
+			{
+				first = (e.target.id.match(/^restrictPunctuation([0-9]+)$/)||0)[1] || null;
+				checked = !e.target.checked;
+			}, false);
 
-				this.notesHidden = document.getElementById("notes").hidden;
-				this.optionsHidden = document.getElementById("options-box").hidden;
-				this.updateOptionsVisibility();     // Hide the options
-				this.updateNotesVisibility();       // Hide the notes
+			ctlRestrictPunctuation.addEventListener("mouseover", function(e)
+			{
+				if (!first)
+					return;
+
+				let id = (e.target.id.match(/^restrictPunctuation([0-9]+)$/) || 0)[1];
+				if (!id)
+					return;
+
+				for(let i = 1; i < 31; i++)
+				{
+					let checkbox = document.getElementById("restrictPunctuation" + i);
+					if ((i < first && i < id) || (i > first && i > id))
+					{
+						checkbox.removeAttribute("_checked");
+						continue;
+					}
+					if (checkbox.getAttribute("_checked") != checked)
+						changed = true;
+
+					checkbox.setAttribute("_checked", checked);
+				}
+				last = e.target;
+			}, false);
+
+			document.addEventListener("mouseup", function(e)
+			{
+				for(let i = 1; i < 31; i++)
+				{
+					let obj = document.getElementById("restrictPunctuation" + i),
+							c = obj.getAttribute("_checked"),
+							changed = false;
+
+					if (c !== null && c !== "")
+					{
+						obj.removeAttribute("_checked");
+						obj.checked = c == "true";
+						changed = true;
+					}
+				}
+				if (changed)
+				{
+					let r = that.restrictPunctuationGet();
+					if (r == PassHashCommon.phCore.optionBits.restrictPunctuation - 1)
+					{
+						last.checked = true;
+						r = that.restrictPunctuationGet() | 1;
+					}
+					else if (r != PassHashCommon.phCore.optionBits.restrictPunctuationLegacy)
+						r |= 1;
+
+					that.restrictPunctuation = r
+					that.update();
+				}
+				first = changed = null;
+			}, false);
+			// This is the only time we write to the option controls.  Otherwise we
+			// just react to their state changes.
+			ctlRequireDigit.checked        = this.requireDigit;
+			ctlRequirePunctuation.checked  = this.requirePunctuation;
+			ctlRequireMixedCase.checked    = this.requireMixedCase;
+			ctlRestrictSpecial.checked     = this.restrictSpecial;
+			ctlRestrictDigits.checked      = this.restrictDigits;
+			ctlSha3.checked                = this.sha3;
+			this.updateCheckboxes();
+
+			ctlHashWordSize.value = this.hashWordSize;
+
+			this.notesHidden = document.getElementById("notes").hidden;
+			this.optionsHidden = document.getElementById("options-box").hidden;
+			this.updateOptionsVisibility();     // Hide the options
+			this.updateNotesVisibility();       // Hide the notes
 //V@no
 /*
 //original
@@ -358,8 +362,16 @@ this.accept = true;
 					masterKey = this.rememberMasterKey ? ctlMasterKey.value : "";
 //					if (siteTag != this._data[0] || masterKey != this._data[1] || strOptions != this._data[2])
 //					if ((this._data.length && (siteTag != this._data[0] || masterKey != this._data[1])) || this.masterKeyInitial != ctlMasterKey.value || this.siteTagInitial != ctlSiteTag.value)
-					if ((this._data.length && this._data.toString() != [siteTag, masterKey, strOptions].toString()) || this.masterKeyInitial != ctlMasterKey.value || this.siteTagInitial != ctlSiteTag.value)
+
+					if (document.getElementById("save").checked
+							&& (	(this._data.length && this._data.toString() != [siteTag, masterKey, strOptions].toString())
+										|| this.masterKeyInitial != ctlMasterKey.value
+										|| this.siteTagInitial != ctlSiteTag.value
+								)
+						)
+					{
 						PassHashCommon.phCore.saveSecureValue(domain, siteTag, masterKey, strOptions);
+					}
 
 /*
 					PassHashCommon.saveSecureValue(
@@ -513,6 +525,7 @@ this.accept = true;
 				var ctlSiteTag   = document.getElementById("site-tag");
 				var ctlMasterKey = document.getElementById("master-key");
 				let ctlHashWord = document.getElementById("hash-word");
+				let ctlSave = document.getElementById("save");
 				var r = 0;
 				if (!ctlSiteTag.value)
 						r = 1;
@@ -551,7 +564,35 @@ this.accept = true;
 				}));
 
 				if ((this.hashWordSaved || typeof(this.hashWordSaved) == "undefined"))
+				{
 					ctlHashWord.classList.toggle("saved", ((typeof(this.hashWordSaved) == "undefined" || this.hashWordSaved == this.hashWord) && this.masterKeySaved === ctlMasterKey.value && this.siteTagSaved === ctlSiteTag.value));
+
+					if (ctlHashWord.value !== ""
+								&& (	(this._data.length
+											&& this._data.toString() != [ctlSiteTag.value, ctlMasterKey.value, this.getOptionString()].toString()
+											&& ctlMasterKey.value !== "" && ctlSiteTag.value !== "")
+										|| (this.masterKeyInitial !== undefined && this.masterKeyInitial != ctlMasterKey.value)
+										|| (this.siteTagInitial !== undefined && this.siteTagInitial != ctlSiteTag.value)
+									)
+					)
+					{
+						if ("__checked" in ctlSave)
+						{
+							ctlSave.checked = ctlSave.__checked;
+							delete ctlSave.__checked
+						}
+
+						ctlSave.disabled = false;
+					}
+					else
+					{
+						if (!("__checked" in ctlSave))
+							ctlSave.__checked = ctlSave.checked;
+
+						ctlSave.checked = false;
+						ctlSave.disabled = true;
+					}
+				}
 
 				if (this.hashWord != hashWordOrig)
 						return 3;   // It was modified
@@ -589,10 +630,12 @@ this.accept = true;
 				this.update();
 		},
 
-		onHashWordSizeChanged: function(e)
+		onHashWordSizeChanged: function(event)
 		{
-//				this.hashWordSize = document.getElementById("hashWordSize").selectedItem.value;
-				this.hashWordSize = document.getElementById("hashWordSize").value;
+				let hashWordSizeObj = document.getElementById("hashWordSize"),
+						v = PassHashCommon.getValue(hashWordSizeObj, "hashWordSize");
+
+				this.hashWordSize = v;
 				if (this.hashWordSizeLast == this.hashWordSize)
 					return;
 

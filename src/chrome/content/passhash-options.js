@@ -73,7 +73,9 @@ var PassHashOptions =
 			let markerSize = document.getElementById("pshOpt_markerSize");
 			for(let i = PassHashCommon.phCore.optsDefault.markerSize.min; i <= PassHashCommon.phCore.optsDefault.markerSize.max; i++)
 			{
-				markerSize.appendItem(i, i);
+				let item = markerSize.appendItem(i, i);
+				if (i == PassHashCommon.phCore.optsDefault.markerSize.default)
+					item.style.fontWeight = "bold";
 			}
 			markerSize.value = opts.markerSize;
 
@@ -142,6 +144,7 @@ var PassHashOptions =
 				opts.rememberMasterKey   = document.getElementById("pshOpt_rememberMasterKey" ).checked;
 				opts.revealSiteTag       = document.getElementById("pshOpt_revealSiteTag"     ).checked;
 				opts.revealHashWord      = document.getElementById("pshOpt_revealHashWord"    ).checked;
+				opts.masterKeyAddTag     = document.getElementById("pshOpt_masterKeyAddTag"   ).checked;
 				opts.guessFullDomain     = document.getElementById("pshOpt_guessFullDomain"   ).checked;
 				opts.showMarker          = document.getElementById("pshOpt_showMarker"        ).checked;
 				opts.unmaskMarker        = document.getElementById("pshOpt_unmaskMarker"      ).checked;
@@ -153,10 +156,10 @@ var PassHashOptions =
 				opts.dblClick            = document.getElementById("pshOpt_dblClick"          ).checked;
 				opts.middleClick         = document.getElementById("pshOpt_middleClick"       ).checked;
 				opts.restoreLast         = document.getElementById("pshOpt_restoreLast"       ).checked;
-				opts.masterKeyAddTag     = document.getElementById("pshOpt_masterKeyAddTag"   ).checked;
 				opts.markerPosition      = ~~document.getElementById("pshOpt_markerPosition"  ).value;
 				opts.markerSize          = ~~document.getElementById("pshOpt_markerSize"      ).value;
 				opts.autocomplete        = document.getElementById("pshOpt_autocomplete"      ).checked;
+				opts.toolbarButton       = document.getElementById("pshOpt_toolbarButton"      ).checked;
 				PassHashCommon.phCore.saveOptions(opts);
 		},
 
@@ -166,7 +169,7 @@ var PassHashOptions =
 			document.getElementById("pshOpt_requireDigit"       ).disabled = checked;
 			document.getElementById("pshOpt_requirePunctuation" ).disabled = checked;
 			document.getElementById("pshOpt_requireMixedCase"   ).disabled = checked;
-			document.getElementById("pshOpt_sha3"               ).disabled = checked;
+			document.getElementById("pshOpt_sha3"               ).disabled = checked || document.getElementById("pshOpt_hashWordSize").value > 26;
 			document.getElementById("pshOpt_hashWordSize"       ).disabled = checked;
 			document.getElementById("pshOpt_requireBox"         ).setAttribute("disabled", checked);
 			document.getElementById("pshOpt_hashWordSizeBox"    ).setAttribute("disabled", checked);
@@ -303,10 +306,11 @@ var PassHashOptions =
 								(document.getElementById("pshOpt_rememberSiteTag"  ).checked ? 2 : 0) +
 								(document.getElementById("pshOpt_rememberMasterKey").checked ? 4 : 0) +
 								(document.getElementById("pshOpt_revealSiteTag"    ).checked ? 8 : 0) +
-								(document.getElementById("pshOpt_revealHashWord"   ).checked ? 16 : 0);
+								(document.getElementById("pshOpt_revealHashWord"   ).checked ? 16 : 0) +
+								(document.getElementById("pshOpt_masterKeyAddTag"  ).checked ? 32 : 0);
 
 //log(sum);
-			return {31:1, 11:2, 0:3}[sum] || 0;
+			return {63:1, 43:2, 0:3}[sum] || 0;
 		},
 
 		applySecurityLevel: function(securityLevel)
@@ -329,6 +333,7 @@ var PassHashOptions =
 								document.getElementById("pshOpt_rememberMasterKey").checked = true;
 								document.getElementById("pshOpt_revealSiteTag"    ).checked = true;
 								document.getElementById("pshOpt_revealHashWord"   ).checked = true;
+								document.getElementById("pshOpt_masterKeyAddTag"  ).checked = true;
 								break;
 						case 3:
 								document.getElementById("pshOpt_guessSiteTag"     ).checked = false;
@@ -336,6 +341,7 @@ var PassHashOptions =
 								document.getElementById("pshOpt_rememberMasterKey").checked = false;
 								document.getElementById("pshOpt_revealSiteTag"    ).checked = false;
 								document.getElementById("pshOpt_revealHashWord"   ).checked = false;
+								document.getElementById("pshOpt_masterKeyAddTag"  ).checked = false;
 								break;
 						case 2:
 								document.getElementById("pshOpt_guessSiteTag"     ).checked = true;
@@ -343,6 +349,7 @@ var PassHashOptions =
 								document.getElementById("pshOpt_rememberMasterKey").checked = false;
 								document.getElementById("pshOpt_revealSiteTag"    ).checked = true;
 								document.getElementById("pshOpt_revealHashWord"   ).checked = false;
+								document.getElementById("pshOpt_masterKeyAddTag"  ).checked = true;
 								break;
 						default:
 				}

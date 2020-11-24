@@ -548,6 +548,27 @@ var PassHashCommon =
 			}
 			return this;
 		},
+
+		getValue: function(node, id)
+		{
+			let s = node.selectionStart,
+					e = node.selectionEnd,
+					v = node.value;
+
+			if (v < PassHashCommon.phCore.optsDefault[id].min)
+				v = PassHashCommon.phCore.optsDefault[id].min;
+			else if (v > PassHashCommon.phCore.optsDefault[id].max)
+				v = PassHashCommon.phCore.optsDefault[id].max;
+
+			if (v != node.value)
+			{
+				node.value = v;
+				node.selectionStart = s;
+				node.selectionEnd = e;
+			}
+			return v;
+		},
+
 		punctuation: [
 			"Exclamation point",
 			"Double quotes",

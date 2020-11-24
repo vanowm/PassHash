@@ -18,6 +18,8 @@
     <commandset id="mainCommandSet">
         <command id="Tasks:PassHash"
             oncommand="PassHash.onInvokeDialog(event);"/>
+        <command id="Tasks:PassHashSettings"
+            oncommand="PassHash.onSettings(event);"/>
     </commandset>
 
     <keyset id="mainKeyset">
@@ -41,19 +43,24 @@
             key="key_passhash"
             accesskey="&passhashMenu.accesskey;"
             command="Tasks:PassHash"
-            insertafter="context-paste"/>
+            insertafter="context-delete"/>
     </popup>
 <!-- Toolbar -->
 	<toolbarpalette id="BrowserToolbarPalette">
 		<toolbarbutton	id="passhash_toolbar_button"
 										class="toolbarbutton-1 passhash-button"
 										label="&passhashMenu.label;"
+										tooltiptext="&passhashMenu.label;"
 				            key="key_passhash"
 				            accesskey="&passhashMenu.accesskey;"
 				            command="Tasks:PassHash"
-										type="button"
+										type="menu-button"
 		>
-			<menupopup onpopupshown="mapaPlus.showMenu(event)" class="mapa_menupopup"/>
+			<menupopup>
+				<menuitem label="&pshDlg.settings.label;"
+									command="Tasks:PassHashSettings"
+				/>
+			</menupopup>
 		</toolbarbutton>
 	</toolbarpalette>
 </overlay> 

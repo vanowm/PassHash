@@ -140,10 +140,11 @@
                             class="formfield"
                             readonly="true"
 														multiline="true"
-														onfocus="PassHash.selectHashWord(event);"
-														onclick="PassHash.selectHashWord(event);"
-														onpopupshowing="PassHash.selectHashWord(event);"
-														oncopy="return PassHash.selectHashWord(event);"
+														ondblclick="PassHash.selectHashWord(event);"
+														_onfocus="PassHash.selectHashWord(event);"
+														_onclick="PassHash.selectHashWord(event);"
+														_onpopupshowing="PassHash.selectHashWord(event);"
+														_oncopy="return PassHash.selectHashWord(event);"
                             />
 												<vbox>
                         <button
@@ -246,8 +247,6 @@
 											<textbox
 												id="hashWordSize"
 												type="number"
-												min="1"
-												max="100"
 												oninput="PassHash.onHashWordSizeChanged(event);"
 												onchange="PassHash.onHashWordSizeChanged(event);"
 												oncommand="PassHash.onHashWordSizeChanged(event);"
@@ -304,5 +303,9 @@
             />
 
     </vbox>
+	<checkbox id="save"
+						label="&pshOpt.save.label;"
+						checked="true"
+	/>
 
 </dialog>

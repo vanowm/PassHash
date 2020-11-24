@@ -117,6 +117,11 @@
                       accesskey="&pshOpt.autocomplete.accesskey;"
                       flex="1"
                       checked="false"/>
+                  <checkbox id="pshOpt_toolbarButton"
+                      label="&pshOpt.toolbarButton.label;"
+                      accesskey="&pshOpt.toolbarButton.accesskey;"
+                      flex="1"
+                      checked="false"/>
 								</groupbox>
 
                 <groupbox style="position: relative; bottom: 0;">
@@ -163,12 +168,18 @@
 											<menulist id="pshOpt_markerPosition"
 											>
 												<menupopup>
-													<menuitem value="1" label="&pshOpt.markePosition.1;"/>
-													<menuitem value="2" label="&pshOpt.markePosition.2;"/>
-													<menuitem value="4" label="&pshOpt.markePosition.4;"/>
+													<menuitem value="8" label="&pshOpt.markePosition.8;"/>
 													<menuitem value="9" label="&pshOpt.markePosition.9;"/>
+													<menuitem value="4" label="&pshOpt.markePosition.4;"/>
+													<menuitem value="5" label="&pshOpt.markePosition.5;"/>
 													<menuitem value="10" label="&pshOpt.markePosition.10;"/>
-													<menuitem value="12" label="&pshOpt.markePosition.12;"/>
+													<menuitem value="11" label="&pshOpt.markePosition.11;"/>
+													<menuitem value="16" label="&pshOpt.markePosition.16;"/>
+													<menuitem value="17" label="&pshOpt.markePosition.17;"/>
+													<menuitem value="20" label="&pshOpt.markePosition.20;"/>
+													<menuitem value="21" label="&pshOpt.markePosition.21;"/>
+													<menuitem value="18" label="&pshOpt.markePosition.18;"/>
+													<menuitem value="19" label="&pshOpt.markePosition.19;"/>
 												</menupopup>
 											</menulist>
 										</hbox>
@@ -241,8 +252,9 @@
 											<textbox
 												id="pshOpt_hashWordSize"
 												type="number"
-												min="4"
-												max="100"
+												oninput="PassHashCommon.getValue(this, 'hashWordSize');"
+												onchange="PassHashCommon.getValue(this, 'hashWordSize');"
+												oncommand="PassHashCommon.getValue(this, 'hashWordSize');"
 											/>
 
                     </hbox>
@@ -264,5 +276,4 @@
             />
 
     </vbox>
-
 </dialog>

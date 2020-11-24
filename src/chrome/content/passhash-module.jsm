@@ -1,24 +1,29 @@
 const EXPORTED_SYMBOLS = ["phCore"],
 			PREF = "extensions.passhash.",
 			{classes: Cc, interfaces: Ci, utils: Cu} = Components,
-			BOTTOM = 1,
-			LEFT = 2,
-			RIGHT = 4,
-			COMPACT = 8;
+			COMPACT = 1,
+			OUTSIDE = 2,
+			BOTTOM = 4,
+			LEFT = 8,
+			RIGHT = 16,
+			ALLOWED = [	BOTTOM	,BOTTOM	|	COMPACT,	BOTTOM	|	RIGHT		,BOTTOM	|	RIGHT		|	COMPACT,
+									LEFT		,LEFT		|	COMPACT,	LEFT		|	OUTSIDE	,LEFT		|	OUTSIDE	|	COMPACT,
+									RIGHT		,RIGHT	|	COMPACT,	RIGHT		|	OUTSIDE	,RIGHT	|	OUTSIDE	|	COMPACT];
 
 Cu.import("resource://gre/modules/Console.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
-
 
 var log = console.log.bind(console);
 var phCore = {
 	host: "passhash.passhash",
 	prefix: "passhash ",
 	PREF: PREF,
+	COMPACT: COMPACT,
+	OUTSIDE: OUTSIDE,
 	BOTTOM: BOTTOM,
 	RIGHT: RIGHT,
 	LEFT: LEFT,
-	COMPACT: COMPACT,
+	ALLOWED: ALLOWED,
 	_prefs: Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefService).getBranch(PREF),
 	loginManager: Cc["@mozilla.org/login-manager;1"].getService(Ci.nsILoginManager),
 	optsDefault:
@@ -30,10 +35,11 @@ var phCore = {
 		hashWordSize:					{default: 26, min: 4, max: 100},
 		lastOptions:					{default: ""},
 		markerPosition:				{default: BOTTOM,
+														min: 4, max: 21,
 														filter: function(i)
 														{
-															i = ~~i
-															if (i < 1 || i > 12 || ((i & BOTTOM ? 1 : 0) + (i & LEFT ? 1 : 0) + (i & RIGHT ? 1 : 0)) != 1)
+															i = ~~i;
+															if (i < 4 || i > 21 || ALLOWED.indexOf(i) == -1)
 																return BOTTOM;
 															return i;
 														}
@@ -47,7 +53,13 @@ var phCore = {
 		requireMixedCase:			{default: true},
 		requirePunctuation:		{default: true},
 		restoreLast:					{default: false},
-		restrictPunctuation:	{default: 1},
+		restrictPunctuation:	{default: 1,
+														min: 0,
+														get max()
+														{
+															return phCore.optionBits.restrictPunctuation;
+														}
+													},
 		revealHashWord:				{default: false},
 		revealSiteTag:				{default: true},
 		sha3:									{default: false},
@@ -55,6 +67,21 @@ var phCore = {
 		shortcutKeyMods:			{default: "accel"},
 		showMarker:						{default: true},
 		unmaskMarker:					{default: false},
+		toolbarButton:				{default: true},
+	},
+	optionBits:
+	{
+		hashWordSize: 127,
+		requireDigit: 128,
+		requirePunctuation: 256,
+		requireMixedCase: 1024,
+		restrictSpecial: 2048,
+		restrictDigits: 4096,
+		sha3: 8192,
+		restrictPunctuation: 2147483647, //30 characters bitwise stored as number after decimal point of options value, starting at bit2.
+																		 //bit1 used as identifier of new default 30 charcters
+																		 //each set bit represents diactivated character
+		restrictPunctuationLegacy: 65535 //legacy 15 character bitwise after decimal point starting at bit2. Bit1 is unsued.
 	},
 	onPrefChange:
 	{
@@ -552,20 +579,6 @@ log(e);
 											.QueryInterface(Ci.nsIWritablePropertyBag2);
 	},
 
-	optionBits:
-	{
-		hashWordSize: 127,
-		requireDigit: 128,
-		requirePunctuation: 256,
-		requireMixedCase: 1024,
-		restrictSpecial: 2048,
-		restrictDigits: 4096,
-		sha3: 8192,
-		restrictPunctuation: 2147483647, //30 characters bitwise stored as number after decimal point of options value, starting at bit2.
-																		 //bit1 used as identifier of new default 30 charcters
-																		 //each set bit represents diactivated character
-		restrictPunctuationLegacy: 65535 //legacy 15 character bitwise after decimal point starting at bit2. Bit1 is unsued.
-	},
 	string2filter(str)
 	{
 		let r = 0;

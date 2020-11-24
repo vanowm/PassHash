@@ -5,7 +5,7 @@
     title="Password Hasher - About"
     orient="vertical"
     autostretch="always"
-    onload="sizeToContent()"
+    onload="sizeToContent();console.log(PassHash);"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
     <!-- Original template by Jed Brown obtained from BugMeNot extension -->
@@ -21,7 +21,7 @@
                 style="font-weight: bold; font-size: x-large;"/>
 
             <text
-                value="ver. 0.9"/>
+                value="ver. 1.3.0"/>
 
             <separator
                 class="thin"/>
@@ -31,7 +31,17 @@
             <text
                 value="Steve Cooper"
                 class="url"
-                onclick="window.open('http://wijjo.com/'); window.close();"/>
+                onclick="window.open('http://wijjo.com/');"/>
+
+            <separator
+                class="thin"/>
+
+            <text value="Updated By:" style="font-weight: bold;"/>
+
+            <text
+                value="V@no"
+                class="url"
+                onclick="window.open('https://github.com/vanowm/');"/>
 
             <separator
                 class="thin"/>
@@ -43,7 +53,7 @@
             <text
                 value="https://github.com/vanowm/PassHash"
                 class="url"
-                onclick="window.open('https://github.com/vanowm/PassHash'); window.close();"/>
+                onclick="window.open('https://github.com/vanowm/PassHash');"/>
 
             <separator
                 class="thin"/>

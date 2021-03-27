@@ -113,12 +113,12 @@ var phCore = {
 							val = obj.min;
 							fix = true;
 						}
-						else if ("max" in obj && (val > obj.max && obj.max != -1))
+						if ("max" in obj && (val > obj.max && obj.max != -1))
 						{
 							val = obj.max != -1 ? obj.max : phCore.opts[key];
 							fix = true;
 						}
-						else if ("filter" in obj)
+						if ("filter" in obj)
 						{
 							let valNew = obj.filter(val);
 							if (valNew != val)
@@ -397,16 +397,27 @@ log(e);
 
 	loadSecureValue: function(domain)
 	{
-			let r = this.findLogin(domain)[0];
-			try
-			{
-				r = JSON.parse(r.password);
-			}
-			catch(e)
-			{
-				r = [];
-			}
-			return r;
+		let r = this.findLogin(domain)[0],
+		    d = r;
+
+		try
+		{
+			r = JSON.parse(r.password);
+		}
+		catch(e)
+		{
+			r = [];
+		}
+		if (d)
+		{
+		  d = d.QueryInterface(Ci.nsILoginMetaInfo);
+  		r.guid = d.guid;
+  		r.timeCreated = d.timeCreated;
+  		r.timeLastUsed = d.timeLastUsed;
+  		r.timePasswordChanged = d.timePasswordChanged;
+  		r.timesUsed = d.timesUsed;
+  	}
+		return r;
 	},
 
 	saveSecureValue: function(domain, siteTag, masterKey, options, login, meta)

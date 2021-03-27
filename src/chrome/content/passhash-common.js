@@ -175,9 +175,15 @@ var PassHashCommon =
                 s = PassHashCommon.injectSpecialCharacter(s, 0, 4, sum, hashWordSize, 48, 10);
  
             if (requirePunctuation && !restrictSpecial)
-                s = PassHashCommon.injectSpecialCharacter(s, 1, 4, sum, hashWordSize, 33, 15, restrictPunctuation);
+            {
+log(s);
+                s = PassHashCommon["injectSpecialCharacter" + (opt.buggy ? "_old" : "")](s, 1, 4, sum, hashWordSize, 33, 15, restrictPunctuation);
+log("using buggy: " + opt.buggy);
+log(s);
+            }
             else if (restrictPunctuation)
             {
+log(s);
 							s = s.replace(/[^a-zA-Z0-9]+/g, function(c, i, s)
 							{
 								let r = sum;
@@ -193,6 +199,7 @@ var PassHashCommon =
             if (requireMixedCase)
             {
                 s = PassHashCommon.injectSpecialCharacter(s, 2, 4, sum, hashWordSize, 65, 26);
+log(s);
                 s = PassHashCommon.injectSpecialCharacter(s, 3, 4, sum, hashWordSize, 97, 26);
             }
             // Strip out special characters as needed.
@@ -214,36 +221,67 @@ var PassHashCommon =
     //  lenOut   = length of head of string that will eventually survive truncation.
     //  cStart   = character code for first valid injected character.
     //  cNum     = number of valid character codes starting from cStart.
-    injectSpecialCharacter: function(sInput, offset, reserved, seed, lenOut, cStart, cNum, filter)
+    injectSpecialCharacter_old: function(sInput, offset, reserved, seed, lenOut, cStart, cNum, filter)
     {
         var pos0 = seed % lenOut;
         var pos = (pos0 + offset) % lenOut;
-				var list = "";
-        if (filter === undefined || filter === null)
+				var list = PassHashCommon.phCore.filter2string(~~filter ^ PassHashCommon.phCore.optionBits["restrictPunctuation" + (filter ? "" : "Legacy")]);
+        for (var i = 0; i < lenOut - reserved; i++)
         {
-	        // Check if a qualified character is already present
-	        // Write the loop so that the reserved block is ignored.
-	        for (var i = 0; i < lenOut - reserved; i++)
-	        {
-	            var i2 = (pos0 + reserved + i) % lenOut
-	            var c = sInput.charCodeAt(i2);
-	            if (c >= cStart && c < cStart + cNum)
-	                return sInput;  // Already present - nothing to do
-	        }
-					for(let i = 0; i < cNum; i++)
-						list += String.fromCharCode(cStart + i);
-      	}
-      	else
-      	{
-					list = PassHashCommon.phCore.filter2string(~~filter ^ PassHashCommon.phCore.optionBits["restrictPunctuation" + (filter ? "" : "Legacy")]);
-      	}
-//log(list, filter, filter.toString(2));
+            var i2 = (pos0 + reserved + i) % lenOut
+            var c = sInput.charCodeAt(i2);
+            if (c >= cStart && c < cStart + cNum)
+            {
+            	if (filter !== null && filter !== undefined && !list.match("\\" + sInput[i2]))
+            		sInput = sInput.substr(0, i2) + list.substr(((seed + sInput.charCodeAt(pos)) % list.length), 1) + sInput.substr(i2+1);
+
+							return sInput;
+            }
+        }
         var sHead   = (pos > 0 ? sInput.substring(0, pos) : "");
 //        var sInject = String.fromCharCode(((seed + sInput.charCodeAt(pos)) % cNum) + cStart);
         var sInject = list.substr(((seed + sInput.charCodeAt(pos)) % list.length), 1);
         var sTail   = (pos + 1 < sInput.length ? sInput.substring(pos+1, sInput.length) : "");
         return (sHead + sInject + sTail);
     },
+	injectSpecialCharacter: function(sInput, offset, reserved, seed, lenOut, cStart, cNum, filter)
+	{
+			var pos0 = seed % lenOut;
+			var pos = (pos0 + offset) % lenOut;
+			let isFilter = filter !== undefined && filter !== null,
+					f, list = "";
+
+			if (isFilter)
+			{
+				list = PassHashCommon.phCore.filter2string(~~filter ^ PassHashCommon.phCore.optionBits["restrictPunctuation" + (filter ? "" : "Legacy")]);
+			}
+			else
+			{
+				for(let i = 0; i < cNum; i++)
+					list += String.fromCharCode(cStart + i);
+			}
+			// Check if a qualified character is already present
+			// Write the loop so that the reserved block is ignored.
+			for (var i = 0; i < lenOut - reserved; i++)
+			{
+					var i2 = (pos0 + reserved + i) % lenOut
+					var c = sInput.charCodeAt(i2);
+					if (c >= cStart && c < cStart + cNum)
+					{
+          	if (isFilter && !list.match("\\" + sInput[i2]))
+          	{
+          		sInput = sInput.substr(0, i2) + list.substr(((seed + sInput.charCodeAt(pos)) % list.length), 1) + sInput.substr(i2+1);
+          	}
+
+						return sInput;  // Already present - nothing to do
+					}
+			}
+			var sHead   = sInput.substr(0, pos);
+			var sInject = list.substr(((seed + sInput.charCodeAt(pos)) % list.length), 1);
+			var sTail   = (pos + 1 < sInput.length ? sInput.substring(pos+1, sInput.length) : "");
+
+			return sHead + sInject + sTail;
+	},
 
     // Another specialized method to replace a class of character, e.g.
     // punctuation, with plain letters and numbers.
@@ -263,8 +301,8 @@ var PassHashCommon =
             if (j > 0)
                 s += sInput.substring(i, i + j);
 // https://github.com/wijjo/passhash/issues/3
-            s += String.fromCharCode((seed + i + j) % 26 + 65);
-//            s += String.fromCharCode((seed + i) % 26 + 65);
+//            s += String.fromCharCode((seed + i + j) % 26 + 65);
+            s += String.fromCharCode((seed + i) % 26 + 65);
             i += (j + 1);
         }
         if (i < sInput.length)
@@ -549,6 +587,7 @@ var PassHashCommon =
 			return this;
 		},
 
+    getValueTimer: null,
 		getValue: function(node, id)
 		{
 			let s = node.selectionStart,
@@ -560,11 +599,19 @@ var PassHashCommon =
 			else if (v > PassHashCommon.phCore.optsDefault[id].max)
 				v = PassHashCommon.phCore.optsDefault[id].max;
 
+      clearTimeout(this.getValueTimer);
 			if (v != node.value)
 			{
-				node.value = v;
-				node.selectionStart = s;
-				node.selectionEnd = e;
+			  function fix()
+			  {
+  				node.value = v;
+  				node.selectionStart = s;
+  				node.selectionEnd = e;
+  			}
+  			if (s != e)
+  			  fix()
+  			else
+			    this.getValueTimer = setTimeout(fix, 1000 );
 			}
 			return v;
 		},

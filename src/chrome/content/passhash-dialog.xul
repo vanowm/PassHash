@@ -143,8 +143,8 @@
 														ondblclick="PassHash.selectHashWord(event);"
 														_onfocus="PassHash.selectHashWord(event);"
 														_onclick="PassHash.selectHashWord(event);"
-														_onpopupshowing="PassHash.selectHashWord(event);"
-														_oncopy="return PassHash.selectHashWord(event);"
+														onpopupshowing="PassHash.selectHashWord(event);"
+														oncopy="return PassHash.selectHashWord(event);"
                             />
 												<vbox>
                         <button

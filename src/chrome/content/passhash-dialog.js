@@ -196,7 +196,9 @@ var PassHash =
 							this.checked = true;
 						}
 					}
-					if (r == (PassHashCommon.phCore.optionBits.restrictPunctuation ^ PassHashCommon.phCore.optionBits.restrictPunctuationLegacy) && !that._data.restrictPunctuation)
+//					if (r == (PassHashCommon.phCore.optionBits.restrictPunctuation ^ PassHashCommon.phCore.optionBits.restrictPunctuationLegacy) && !that._data.restrictPunctuation)
+//wtf?
+					if (r == (PassHashCommon.phCore.optionBits.restrictPunctuation ^ PassHashCommon.phCore.optionBits.restrictPunctuationLegacy))
 						r = 0;
 					else if (r != PassHashCommon.phCore.optionBits.restrictPunctuationLegacy)
 						r |= 1;
@@ -315,9 +317,8 @@ else
 	ctlMasterKey.select();
 }
 ctlMasterKey.focus();
-let r = this.updateHashWord();
+let r = this.updateHashWord(data.timePasswordChanged > 1605669384000 && data.timePasswordChanged < 1619499600000); //v1.2.1 to 1.3.1
 
-this.hashWordCur = this.hashWord;
 //log(this.hashWord);
 this.hashWordSaved = this.hashWord;
 this.masterKeyInitial = ctlMasterKey.value;
@@ -520,7 +521,7 @@ this.accept = true;
 		//  1 = Site tag bad or missing
 		//  2 = Master key bad or missing
 		//  3 = Hash word successfully generated
-		updateHashWord: function()
+		updateHashWord: function(buggy)
 		{
 				var ctlSiteTag   = document.getElementById("site-tag");
 				var ctlMasterKey = document.getElementById("master-key");
@@ -546,6 +547,7 @@ this.accept = true;
 				if (r)
 				{
 					this.setHashWord("");
+					ctlHashWord.classList.toggle("saved", false);
 					return r;
 				}
 				// Change the hash word and determine whether or not it was modified.
@@ -560,7 +562,8 @@ this.accept = true;
 					restrictSpecial: this.restrictSpecial,
 					restrictDigits: this.restrictDigits,
 					sha3: this.sha3,
-					restrictPunctuation: this.restrictPunctuation
+					restrictPunctuation: this.restrictPunctuation,
+					buggy: buggy
 				}));
 
 				if ((this.hashWordSaved || typeof(this.hashWordSaved) == "undefined"))
